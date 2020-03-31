@@ -40,16 +40,16 @@ BoardSection: has a property for how many spaces in that section is occupied alr
     to be added as a property of each HTMLCollection
 
 Interface:
-Image of a deck in the center (cardback)
+Image of a deck in the center (cardback) [done]
     unshifts the CardDeck onclick
-4x4 board, showing outlines of locations where a card could go
+4x4 board, showing outlines of locations where a card could go [done]
     Each location is its own image element, so its src can be updated with card faces
     On click, element calls its own CardSpace's method for checking if the flipped card can go there
 Card drawn off the top of the deck appears next to the deck 
-Reset button on bottom right
-Score on bottom
-Instructions button on bottom left
-Message board on top right to tell if player is in removal phase, powerups, win or lose
+Reset button on bottom right [done]
+Score on bottom [done]
+Instructions button on bottom left [done]
+Message board below title to tell if player is in removal phase, powerups, win or lose [done]
 Button on right side for using powerup
 
 
