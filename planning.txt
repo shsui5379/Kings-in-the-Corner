@@ -57,8 +57,8 @@ Flow:
 Create Card objects for each card in a deck
 Push the Cards into a CardDeck
 Call the CardDeck's shuffling method
-Create an array of HTML collections for each set of spaces (top/bottom, sides, corners)
-For each element of each collection, give them a CardSpace that's aware of which section of the board it's located in
+Create an array of HTML collections for each set of spaces (top/bottom, sides, corners) [done]
+For each element of each collection, give them a CardSpace that's aware of which section of the board it's located in [done]
 
 Repeat while not in removal phase: 
 When the center deck is clicked, set the broadcaster equal to the unshift of the deck
