@@ -63,6 +63,38 @@
 				}
 			</style>
 			<script>
+				function initialize() {
+					groups = [document.getElementsByClassName("corner"), document.getElementsByClassName("top"), document.getElementsByClassName("side")];
+					for (var i = 0; i < groups.length; i++) { //represent each card space from the front end as an object in the back end
+						for (var el of groups[i]) {
+							el.src = "cardimages/target.png";
+							el.space = new CardSpace(i);
+						}
+					}
+				}
+
+				HTMLCollection.prototype.occupiedSpaces = function() { //determine how many CardSpace in that group is occupied
+					
+				}
+				HTMLCollection.prototype.allRoyals = function() { //determines if there are 4 royals in that group
+					
+				}
+
+				function CardSpace(loc) { //the individual card spaces 
+					this.groupNum = loc; //0 is corners, 1 is top/bottom, 2 is side
+				}
+
+				function Card(s, r) { //the individual cards
+					this.rank = r;
+					this.imageSrc = r+"-"+s+".png";
+				}
+
+				function CardDeck() {} //a deck of cards
+				CardDeck.prototype = Array.prototype; //like an array
+				CardDeck.prototype.shuffle = function() { //shuffling the deck of cards
+
+				}
+
 				function toggleInstructions() {
 
 				}
@@ -71,7 +103,7 @@
 				}
 			</script>
 		</head>
-        <body>
+        <body onload="initialize();">
 			<!-- top region -->
 			<h1>Kings in the Corner</h1>
 			<div id="messageBoard">This is a test message!</div>
@@ -79,28 +111,28 @@
 
 			<!-- board -->
 			<span>
-				<img class="corner" src="cardimages/target.png"/>
-				<img class="top" src="cardimages/target.png"/>
-				<img class="top" src="cardimages/target.png"/>
-				<img class="corner" src="cardimages/target.png"/>
+				<img class="corner" />
+				<img class="top" />
+				<img class="top" />
+				<img class="corner" />
 				<br />
 
-				<img class="side" src="cardimages/target.png"/>
+				<img class="side" />
 				<span class="blank"></span>
 				<span class="blank"></span>
-				<img class="side" src="cardimages/target.png"/>
+				<img class="side" />
 				<br />
 
-				<img class="side" src="cardimages/target.png"/>
+				<img class="side" />
 				<span class="blank"></span>
 				<span class="blank"></span>
-				<img class="side" src="cardimages/target.png"/>
+				<img class="side" />
 				<br />
 
-				<img class="corner" src="cardimages/target.png"/>
-				<img class="top" src="cardimages/target.png"/>
-				<img class="top" src="cardimages/target.png"/>
-				<img class="corner" src="cardimages/target.png"/>
+				<img class="corner" />
+				<img class="top" />
+				<img class="top" />
+				<img class="corner" />
 				<br />
 
 				<img id="center" src="cardimages/back-red-75-3.png"/>
