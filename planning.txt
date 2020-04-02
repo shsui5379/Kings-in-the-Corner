@@ -9,8 +9,8 @@ Boolean to determine if it's removal phase
 powerup storage
 
 Functions:
-initialize to call objects to be created and attached to the appropriate html element
-Un/hide the instructions
+initialize to call objects to be created and attached to the appropriate html element [done]
+Un/hide the instructions [done]
 Reset that clears the board, score and prepares a new deck of cards
 Check if the player lost by:
     lost if broadcasted card:
@@ -29,7 +29,7 @@ Check if the player should be awarded a powerup.  Check when a section has all 4
     4 Jacks: give jump
 
 
-Objects: 
+Objects: [done]
 Cards: value and src properties
 CardDeck: like an array, but has a shuffling method
     to be added as a property of the deck in the center
@@ -54,9 +54,9 @@ Button on right side for using powerup
 
 
 Flow:
-Create Card objects for each card in a deck
-Push the Cards into a CardDeck
-Call the CardDeck's shuffling method
+Create Card objects for each card in a deck [done]
+Push the Cards into a CardDeck [done]
+Call the CardDeck's shuffling method [done]
 Create an array of HTML collections for each set of spaces (top/bottom, sides, corners) [done]
 For each element of each collection, give them a CardSpace that's aware of which section of the board it's located in [done]
 
