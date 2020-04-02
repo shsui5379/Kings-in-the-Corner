@@ -33,20 +33,17 @@
 				}
 
 				/*buttons*/
-				button
-				{
+				button {
 					border-radius: 4px;
 					height: 36px;
 					padding: 0px 16px;
 					margin: 8px 14px;
 					outline: none;
 				}
-				button:hover
-				{
+				button:hover {
 					box-shadow: 0px 2px 4px -1px rgba(0,0,0,.2), 0px 4px 5px 0px rgba(0,0,0,.14), 0px 1px 10px 0px rgba(0,0,0,.12);
 				}
-				button:active
-				{
+				button:active {
 					box-shadow: 0px 5px 5px -3px rgba(0,0,0,.2), 0px 8px 10px 1px rgba(0,0,0,.14), 0px 3px 14px 2px rgba(0,0,0,.12);
 				}
 
@@ -63,17 +60,22 @@
 				}
 			</style>
 			<script>
+				//initializations and objects
 				function initialize() {
 					groups = [document.getElementsByClassName("corner"), document.getElementsByClassName("top"), document.getElementsByClassName("side")];
-					for (var i = 0; i < groups.length; i++) { //represent each card space from the front end as an object in the back end
+					for (var i = 0; i < groups.length; i++) { 
 						for (var el of groups[i]) {
 							el.src = "cardimages/target.png";
-							el.space = new CardSpace(i);
+							el.space = new CardSpace(i); //represent each card space element from the front end as an object in the back end
 						}
 					}
+
+					deck = new CardDeck() //an empty deck
+					deck.populate(); //fill the deck
+					deck.shuffle(); //shuffle the deck
 				}
 
-				HTMLCollection.prototype.occupiedSpaces = function() { //determine how many CardSpace in that group is occupied
+				HTMLCollection.prototype.allOccupied = function() { //determine how many CardSpace in that group is occupied
 					
 				}
 				HTMLCollection.prototype.allRoyals = function() { //determines if there are 4 royals in that group
@@ -81,7 +83,10 @@
 				}
 
 				function CardSpace(loc) { //the individual card spaces 
-					this.groupNum = loc; //0 is corners, 1 is top/bottom, 2 is side
+					this.groupNum = loc; //0 is corner, 1 is top/bottom, 2 is side
+				}
+				CardSpace.prototype.action = function() { //onclick action of card spaces
+
 				}
 
 				function Card(s, r) { //the individual cards
@@ -91,8 +96,26 @@
 
 				function CardDeck() {} //a deck of cards
 				CardDeck.prototype = Array.prototype; //like an array
+				CardDeck.prototype.populate = function() { //fills the deck with a standard deck
+					for (var r=1; r!=14; r++) { //ranks
+						for (var s=0; s!=4; s++) { //suits
+							this.push(new Card(s, r));
+						}
+					}
+				}
 				CardDeck.prototype.shuffle = function() { //shuffling the deck of cards
+					var temp = [];
+					while (this.length != 0) {
+						temp.push((this.splice(randomInteger(0, this.length-1), 1))[0]); //pull cards from random order into a temporary deck
+					}
+					this.push.apply(this, temp); //replace the actual deck with the new shuffled one
+				}
 
+				function randomInteger(lower, upper)  //random number generator
+				{
+					var multiplier = upper - lower + 1;
+					var rnd = Math.floor((Math.random() * multiplier) + lower);
+					return rnd;
 				}
 
 				function toggleInstructions() {
