@@ -18,14 +18,15 @@
 				}
 
 				/*scoreboard, buttons region*/
-				#scoreboard, #instructions, #reset {
+				#scoreboard, #instructionOpen, #reset {
 					position: absolute;
+					background-color: inherit;
 				}
 				#scoreboard {
 					bottom: 1%;
 					width: 100%;
 				}
-				#instructions {
+				#instructionOpen {
 					left: 1%;
 				}
 				#reset {
@@ -58,6 +59,37 @@
 					top: -296px;
 					box-shadow: 2px 2px 0px 1px white;
 				}
+
+				/*instructions*/
+				#instructionPopup {
+					display: none;
+					width: 76%;
+					font-size: 15pt;
+					position: absolute;
+					top: 12%;
+					left: 12%;
+					z-index: 1;
+					box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);
+					border-radius: 4px;
+				}
+				h6 {
+					font-size: 25pt;
+					margin: 20px 0px;
+					font-weight: 500;
+				}
+				ul {
+					display: inline-block;
+				}
+				p {
+					margin: 0px;
+				}
+				#instructionClose {
+					margin: 20px;
+				}
+
+				#messageBoard {
+					background-color: inherit;
+				}
 			</style>
 			<script>
 				//initializations and objects
@@ -73,6 +105,8 @@
 					deck = new CardDeck() //an empty deck
 					deck.populate(); //fill the deck
 					deck.shuffle(); //shuffle the deck
+
+					instructionState = document.getElementById("instructionPopup");
 				}
 
 				HTMLCollection.prototype.allOccupied = function() { //determine how many CardSpace in that group is occupied
@@ -111,18 +145,25 @@
 					this.push.apply(this, temp); //replace the actual deck with the new shuffled one
 				}
 
-				function randomInteger(lower, upper)  //random number generator
-				{
+				function randomInteger(lower, upper) {  //random number generator
 					var multiplier = upper - lower + 1;
 					var rnd = Math.floor((Math.random() * multiplier) + lower);
 					return rnd;
 				}
 
 				function toggleInstructions() {
-
+					if (instructionState.style.display == "") { //open
+						instructionState.style.display = "inline-block";
+						document.body.style.backgroundColor = "#745619"; //dim background
+					} else { //close
+						instructionState.style.display = "";
+						document.body.style.backgroundColor = "#ffbd38";
+					}
 				}
 				function reset() {
-					
+					if(confirm("Are you sure you want to reset this round?  This cannot be undone.")) {
+
+					}
 				}
 			</script>
 		</head>
@@ -161,9 +202,43 @@
 				<img id="center" src="cardimages/back-red-75-3.png"/>
 			</span>
 
+			<!-- instructions -->
+			<div id="instructionPopup">
+				<h6>Instructions</h6>
+				<p>
+					Start by clicking the deck in the center to draw a card.  Then, look at the card.  If it is a
+					<ul>
+						<li>Jack, it must be placed on a non-corner space on the left or right sides.</li>
+						<li>Queen, it must be placed on a non-corner space on the top or bottom sides.</li>
+						<li>King, it must be placed on a corner.</li>
+						<li>number card, it can be placed anywhere.</li>
+					</ul>
+					<br />
+					To place a card down, click on an appropriate empty card space.  If there are no appropriate card spaces free for you to put the card down on, you lost the game. 
+					<br />
+					Once you sucessfully filled all the spaces with appropriate cards, the game enters the removal phase.  In this phase, click on any 2 number cards that sum to 10 to take them off the board.  A 10 card by itself can be clicked on to be removed.   An Ace is worth 1.  Once all the number cards are taken off the board, you win the game.  If that's not possible, you lost the game.  
+					<br /><br />
+					You can earn points by
+					<br />
+					<ul>
+						<li>placing a picture card down for 1 point.</li>
+						<li>placing down 4 cards of the same royalty for 4 points.</li>
+						<li>winning the game for 12 points + 1 point for each card left in the deck.</li>
+					</ul>
+					<br />
+					You can earn a powerup once per round for your next round by
+					<ul>
+						<li>placing 4 kings for a card peek, which allows you one opportunity to peek at the next card in the deck.</li>
+						<li>placing 4 queens for a triple play, which allows you one opportunity to remove 3 cards summing to 10 at once during removal phase.</li>
+						<li>placing 4 jacks for a jump, which allows you to move a card that's already placed on the board (but must still be placed in an appropriate location).</li>
+					</ul>
+				</p>
+				<button onclick="toggleInstructions()" id="instructionClose">Close</button>
+			</div>
+
 			<!-- scoreboard, button region -->
 			<div id="scoreboard">
-				<button id="instructions" onclick="toggleInstructions();">Instructions</button>
+				<button id="instructionOpen" onclick="toggleInstructions();">Instructions</button>
 				Current score: <span id="currentScore">0</span> High score: <span id="highScore">0</span>
 				<button id="reset" onclick="reset();">Reset</button>
 			<div>
