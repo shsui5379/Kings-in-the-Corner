@@ -95,17 +95,23 @@
 			<script>
 				//initializations and objects
 				function initialize() {
+					//attaching objects
 					groups = [document.getElementsByClassName("corner"), document.getElementsByClassName("top"), document.getElementsByClassName("side")];
 					for (var i = 0; i < groups.length; i++) { 
 						for (var el of groups[i]) {
 							el.src = "cardimages/target.png";
 							el.space = new CardSpace(i); //represent each card space element from the front end as an object in the back end
+							el.space.el = el; //path back to element
+							el.onclick = function() {this.space.select();}
 						}
 					}
 
+					//elements
 					cardDeck = document.getElementById("center");
 					instructionState = document.getElementById("instructionPopup");
+					msgOut = document.getElementById("messageBoard");
 
+					//deck
 					var deck = new CardDeck() //an empty deck
 					deck.populate(); //fill the deck
 					deck.shuffle(); //shuffle the deck
@@ -118,7 +124,7 @@
 				}
 
 
-
+				//adding functions to HTMLCollections
 				HTMLCollection.prototype.allOccupied = function() { //determine how many CardSpace in that group is occupied
 					
 				}
@@ -126,21 +132,39 @@
 					
 				}
 				
-
+				//CardSpace
 				function CardSpace(loc) { //the individual card spaces 
 					this.groupNum = loc; //0 is corner, 1 is top/bottom, 2 is side
 				}
-				CardSpace.prototype.action = function() { //onclick action of card spaces
-
+				CardSpace.prototype.select = function() { //onclick action of card spaces
+					msgClear();
+					if (!removalPhase) { //if it's not the removal phase
+						switch (true) {
+							case broadcaster == undefined: //if a card hasn't been drawn
+								msgOut.innerHTML = "Draw a card first";
+							case this.card != undefined: //if there's already a card there
+								msgOut.innerHTML = "This space is already occupied.";
+								break;
+							case validPlacement(this, broadcaster): //if the placement is valid, move card there
+								this.card = broadcaster;
+								this.el.src = broadcaster.imageSrc;
+								broadcaster = undefined;
+								cardDeck.src = "cardimages/back-red-75-3.png";
+								break;
+							default: //if placement is invalid
+								msgOut.innerHTML = "This card cannot go here.";
+								break;
+						}
+					}
 				}
 
-
+				//Card
 				function Card(s, r) { //the individual cards
 					this.rank = r;
 					this.imageSrc = "cardimages/"+r+"-"+s+".png";
 				}
 
-
+				//CardDeck
 				function CardDeck() {} //a deck of cards
 				CardDeck.prototype = Array.prototype; //like an array
 				CardDeck.prototype.populate = function() { //fills the deck with a standard deck
@@ -158,21 +182,50 @@
 					this.push.apply(this, temp); //replace the actual deck with the new shuffled one
 				}
 				CardDeck.prototype.draw = function() { //drawing a card
-					if (!removalPhase && broadcaster == undefined) { //can only draw a card when it's not removal phase, and the last card to be drawn has been placed down
-						broadcaster = this.shift(); //broadcast what card has been drawn
-						this.el.src = broadcaster.imageSrc; //display the card that has been drawn
+					msgClear();
+					if (!removalPhase) { //can only draw a card when it's not removal phase
+						if (broadcaster == undefined) { //can only draw a card if the previously drawn card has been placed down
+							broadcaster = this.shift(); //broadcast what card has been drawn
+							this.el.src = broadcaster.imageSrc; //display the card that has been drawn
+						} else {
+							msgOut.innerHTML = "Place down the card before drawing the next one."
+						}
+					} else {
+						msgOut.innerHTML = "You can't draw a card during the Removal Phase."
 					}
 				}
 
 
-
+				//tools
 				function randomInteger(lower, upper) {  //random number generator
 					var multiplier = upper - lower + 1;
 					var rnd = Math.floor((Math.random() * multiplier) + lower);
 					return rnd;
 				}
-
-				function toggleInstructions() {
+				function validPlacement(space, card) { //determines if a card can go into a given space
+					var output = true;
+					switch (true) {
+						case space.groupNum == 0 && (card.rank == 12 || card.rank == 11): //only kings in the corner
+							output = false;
+							break;
+						case space.groupNum == 1 && (card.rank == 11 || card.rank == 13): //only queens on the top/bottom
+							output = false;
+							break;
+						case space.groupNum == 2 && (card.rank == 12 || card.rank == 13): //only jacks on the sides
+							output = false;
+							break;
+					}
+					return output;
+				}
+				//controls
+				function msgClear() { //clear error messages from message board
+					if (removalPhase) {
+						msgOut.innerHTML = "REMOVAL PHASE";
+					} else {
+						msgOut.innerHTML = "";
+					}
+				}
+				function toggleInstructions() { //open or close instructions
 					if (instructionState.style.display == "") { //open
 						instructionState.style.display = "inline-block";
 						document.body.style.backgroundColor = "#745619"; //dim background
@@ -181,7 +234,7 @@
 						document.body.style.backgroundColor = "#ffbd38";
 					}
 				}
-				function reset() {
+				function reset() { //reset round
 					if(confirm("Are you sure you want to reset this round?  This cannot be undone.")) {
 
 					}
@@ -191,7 +244,7 @@
         <body onload="initialize();">
 			<!-- top region -->
 			<h1>Kings in the Corner</h1>
-			<div id="messageBoard">This is a test message!</div>
+			<div id="messageBoard"></div>
 			<br />
 
 			<!-- board -->
