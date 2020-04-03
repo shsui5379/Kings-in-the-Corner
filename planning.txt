@@ -41,11 +41,11 @@ BoardSection: has a property for how many spaces in that section is occupied alr
 
 Interface:
 Image of a deck in the center (cardback) [done]
-    unshifts the CardDeck onclick
+    removes top card the CardDeck onclick [done]
 4x4 board, showing outlines of locations where a card could go [done]
-    Each location is its own image element, so its src can be updated with card faces
-    On click, element calls its own CardSpace's method for checking if the flipped card can go there
-Card drawn off the top of the deck appears next to the deck 
+    Each location is its own image element, so its src can be updated with card faces [done]
+    On click, element calls its own CardSpace's method for checking if the flipped card can go there [done]
+Card drawn off the top of the deck replaces deck's src [done]
 Reset button on bottom right [done]
 Score on bottom [done]
 Instructions button on bottom left [done]
@@ -61,12 +61,12 @@ Create an array of HTML collections for each set of spaces (top/bottom, sides, c
 For each element of each collection, give them a CardSpace that's aware of which section of the board it's located in [done]
 
 Repeat while not in removal phase: 
-When the center deck is clicked, set the broadcaster equal to the unshift of the deck
+When the center deck is clicked, set the broadcaster equal to the shift of the deck [done]
 if the player has the card peek powerup and powerup button is clicked, also show the next card next to the deck
-Show the unshifted card's src next to the deck
+Replace the deck's src with the shifted card's [done]
 Call function to determine if the player lost yet
-Player is to click on a space on the board.  
-On click of a space, check if the space already has a card property.  If not, check the broadcasted card's value.  If it's allowed into that space, then transfer the broadcasted card to be a property of that CardSpace, and update the element's src
+Player is to click on a space on the board.  [done]
+On click of a space, check if the space already has a card property.  If not, check the broadcasted card's value.  If it's allowed into that space, then transfer the broadcasted card to be a property of that CardSpace, and update the element's src [done]
     Allowed spaces: 
     Jacks in the sides
     Queens in the top/bottom
