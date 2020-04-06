@@ -64,7 +64,7 @@ Repeat while not in removal phase:
 When the center deck is clicked, set the broadcaster equal to the shift of the deck [done]
 if the player has the card peek powerup and powerup button is clicked, also show the next card next to the deck
 Replace the deck's src with the shifted card's [done]
-Call function to determine if the player lost yet
+Call function to determine if the player lost yet [done]
 Player is to click on a space on the board.  [done]
 On click of a space, check if the space already has a card property.  If not, check the broadcasted card's value.  If it's allowed into that space, then transfer the broadcasted card to be a property of that CardSpace, and update the element's src [done]
     Allowed spaces: 
@@ -75,7 +75,7 @@ On click of a space, check if the space already has a card property.  If not, ch
 If the player has the jump powerup and presses the powerup button, the player can click on a card.  Check that the space does have a card then store it in the broadcastesr.  Then, the user can click on another space.  Check that the space doesn't already have a card, then check if the card is allowed to be moved there.  If so, attach that card to that space.  
 On successful placement, increase the score by 1
 Call function to determine if the player should be awarded a powerup
-Call function to determine if it's removal phase
+Call function to determine if it's removal phase [done]
 
 Repeat while in removal phase:
 Call function to see if player won
