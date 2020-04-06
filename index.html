@@ -96,11 +96,11 @@
 				//initializations and objects
 				function initialize() {
 					//attaching objects
-					groups = [document.getElementsByClassName("corner"), document.getElementsByClassName("top"), document.getElementsByClassName("side")];
+					groups = [document.getElementsByClassName("side"), document.getElementsByClassName("top"), document.getElementsByClassName("corner")];
 					for (var i = 0; i < groups.length; i++) { 
 						for (var el of groups[i]) {
 							el.src = "cardimages/target.png";
-							el.space = new CardSpace(i); //represent each card space element from the front end as an object in the back end
+							el.space = new CardSpace(i+11); //represent each card space element from the front end as an object in the back end
 							el.space.el = el; //path back to element
 							el.onclick = function() {this.space.select();}
 						}
@@ -125,16 +125,29 @@
 
 
 				//adding functions to HTMLCollections
-				HTMLCollection.prototype.allOccupied = function() { //determine how many CardSpace in that group is occupied
-					
+				HTMLCollection.prototype.allOccupied = function() { //determine if all the CardSpaces in the group is occupied
+					for (var el of this) {
+						if (el.space.card == undefined) {
+							return false;
+						}
+					}
+					return true;
 				}
 				HTMLCollection.prototype.allRoyals = function() { //determines if there are 4 royals in that group
-					
+					if (this.allOccupied()) { //all spaces should be occupied first
+						for (var el of this) {
+							if (el.space.card.rank != el.space.groupNum) {
+								return false;
+							}
+						}
+						return true;
+					}
+					return false;
 				}
 				
 				//CardSpace
 				function CardSpace(loc) { //the individual card spaces 
-					this.groupNum = loc; //0 is corner, 1 is top/bottom, 2 is side
+					this.groupNum = loc; //11 is side, 12 is top/bottom, 13 is corner
 				}
 				CardSpace.prototype.select = function() { //onclick action of card spaces
 					msgClear();
@@ -203,19 +216,7 @@
 					return rnd;
 				}
 				function validPlacement(space, card) { //determines if a card can go into a given space
-					var output = true;
-					switch (true) {
-						case space.groupNum == 0 && (card.rank == 12 || card.rank == 11): //only kings in the corner
-							output = false;
-							break;
-						case space.groupNum == 1 && (card.rank == 11 || card.rank == 13): //only queens on the top/bottom
-							output = false;
-							break;
-						case space.groupNum == 2 && (card.rank == 12 || card.rank == 13): //only jacks on the sides
-							output = false;
-							break;
-					}
-					return output;
+					return !(card.rank > 10 && card.rank != space.groupNum);
 				}
 				//controls
 				function msgClear() { //clear error messages from message board
