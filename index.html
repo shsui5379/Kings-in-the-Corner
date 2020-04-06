@@ -121,6 +121,7 @@
 					//states
 					removalPhase = false;
 					broadcaster = undefined;
+					playerLost = false;
 				}
 
 
@@ -150,23 +151,30 @@
 					this.groupNum = loc; //11 is side, 12 is top/bottom, 13 is corner
 				}
 				CardSpace.prototype.select = function() { //onclick action of card spaces
-					msgClear();
-					if (!removalPhase) { //if it's not the removal phase
-						switch (true) {
-							case broadcaster == undefined: //if a card hasn't been drawn
-								msgOut.innerHTML = "Draw a card first";
-							case this.card != undefined: //if there's already a card there
-								msgOut.innerHTML = "This space is already occupied.";
-								break;
-							case validPlacement(this, broadcaster): //if the placement is valid, move card there
-								this.card = broadcaster;
-								this.el.src = broadcaster.imageSrc;
-								broadcaster = undefined;
-								cardDeck.src = "cardimages/back-red-75-3.png";
-								break;
-							default: //if placement is invalid
-								msgOut.innerHTML = "This card cannot go here.";
-								break;
+					if (!playerLost) {
+						msgClear();
+						if (!removalPhase) { //if it's not the removal phase
+							switch (true) {
+								case broadcaster == undefined: //if a card hasn't been drawn
+									msgOut.innerHTML = "Draw a card first";
+									break;
+								case this.card != undefined: //if there's already a card there
+									msgOut.innerHTML = "This space is already occupied.";
+									break;
+								case validPlacement(this, broadcaster): //if the placement is valid, move card there
+									this.card = broadcaster;
+									this.el.src = broadcaster.imageSrc;
+									cardDeck.src = "cardimages/back-red-75-3.png";
+									broadcaster = undefined;
+									if (proceedToRemovalPhase()) { //check if all spaces are occupied
+										removalPhase = true;
+										msgOut.innerHTML = "REMOVAL PHASE";
+									}
+									break;
+								default: //if placement is invalid
+									msgOut.innerHTML = "This card cannot go here.";
+									break;
+							}
 						}
 					}
 				}
@@ -195,16 +203,22 @@
 					this.push.apply(this, temp); //replace the actual deck with the new shuffled one
 				}
 				CardDeck.prototype.draw = function() { //drawing a card
-					msgClear();
-					if (!removalPhase) { //can only draw a card when it's not removal phase
-						if (broadcaster == undefined) { //can only draw a card if the previously drawn card has been placed down
-							broadcaster = this.shift(); //broadcast what card has been drawn
-							this.el.src = broadcaster.imageSrc; //display the card that has been drawn
+					if (!playerLost) {
+						msgClear();
+						if (!removalPhase) { //can only draw a card when it's not removal phase
+							if (broadcaster == undefined) { //can only draw a card if the previously drawn card has been placed down
+								broadcaster = this.shift(); //broadcast what card has been drawn
+								this.el.src = broadcaster.imageSrc; //display the card that has been drawn
+								if (lost()) { //check if card is placable
+									msgOut.innerHTML = "You lost.  Click reset to play again.  "
+									playerLost = true;
+								}
+							} else {
+								msgOut.innerHTML = "Place down the card before drawing the next one."
+							}
 						} else {
-							msgOut.innerHTML = "Place down the card before drawing the next one."
+							msgOut.innerHTML = "You can't draw a card during the Removal Phase."
 						}
-					} else {
-						msgOut.innerHTML = "You can't draw a card during the Removal Phase."
 					}
 				}
 
@@ -218,6 +232,21 @@
 				function validPlacement(space, card) { //determines if a card can go into a given space
 					return !(card.rank > 10 && card.rank != space.groupNum);
 				}
+				function lost() { //determine if player has lose
+					if (broadcaster.rank > 10) {
+						return groups[broadcaster.rank-11].allOccupied(); //for royals, which placement is restricted, check if its possible group is full	
+					}
+					return false;
+				}
+				function proceedToRemovalPhase() { //check if all spaces are occupied
+					for (var group of groups) {
+						if (!group.allOccupied()) {
+							return false;
+						}
+					}
+					return true;
+				}
+
 				//controls
 				function msgClear() { //clear error messages from message board
 					if (removalPhase) {
