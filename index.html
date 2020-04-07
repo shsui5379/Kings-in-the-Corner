@@ -122,6 +122,10 @@
 					removalPhase = false;
 					broadcaster = undefined;
 					playerLost = false;
+					currentPowerup = 0; //11: jump, 12: triple play, 13: card peek
+					if (localStorage.earnedPowerup == undefined) {
+						localStorage.earnedPowerup = 0; //apply next round
+					}
 				}
 
 
@@ -166,6 +170,9 @@
 									this.el.src = broadcaster.imageSrc;
 									cardDeck.src = "cardimages/back-red-75-3.png";
 									broadcaster = undefined;
+									if (localStorage.earnedPowerup == 0) { //determine if the player is elegible for a powerup (meaning hasn't earned one yet)
+										awardPowerup();
+									}
 									if (proceedToRemovalPhase()) { //check if all spaces are occupied
 										removalPhase = true;
 										msgOut.innerHTML = "REMOVAL PHASE";
@@ -245,6 +252,26 @@
 						}
 					}
 					return true;
+				}
+				
+				function awardPowerup() { //awards powerup based on 
+					for (var group of groups) {
+						if (group.allRoyals()) {
+							localStorage.earnedPowerup = group[0].space.groupNum;
+							switch (localStorage.earnedPowerup) {
+								case "11":
+									var name = "Jump";
+									break;
+								case "12":
+									var name = "Triple Play";
+									break;
+								case "13":
+									var name = "Card Peek";
+									break;
+							}
+							msgOut.innerHTML = "You earned a powerup for your next round: " + name;
+						}
+					}
 				}
 
 				//controls
