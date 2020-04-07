@@ -110,7 +110,9 @@
 					cardDeck = document.getElementById("center");
 					instructionState = document.getElementById("instructionPopup");
 					msgOut = document.getElementById("messageBoard");
-
+					currentScoreDisp = document.getElementById("currentScore");
+					highScoreDisp = document.getElementById("highScore");
+					
 					//deck
 					var deck = new CardDeck() //an empty deck
 					deck.populate(); //fill the deck
@@ -122,10 +124,17 @@
 					removalPhase = false;
 					broadcaster = undefined;
 					playerLost = false;
-					currentPowerup = 0; //11: jump, 12: triple play, 13: card peek
 					if (localStorage.earnedPowerup == undefined) {
 						localStorage.earnedPowerup = 0; //apply next round
 					}
+					currentPowerup = localStorage.earnedPowerup; //11: jump, 12: triple play, 13: card peek
+					localStorage.earnedPowerup = 0;
+					currentScore = 0;
+					if (localStorage.highScore == undefined) {
+						localStorage.highScore = 0;
+					}
+
+					highScoreDisp.innerHTML = localStorage.highScore;
 				}
 
 
@@ -173,6 +182,7 @@
 									if (localStorage.earnedPowerup == 0) { //determine if the player is elegible for a powerup (meaning hasn't earned one yet)
 										awardPowerup();
 									}
+									updateScore(this);
 									if (proceedToRemovalPhase()) { //check if all spaces are occupied
 										removalPhase = true;
 										msgOut.innerHTML = "REMOVAL PHASE";
@@ -219,6 +229,7 @@
 								if (lost()) { //check if card is placable
 									msgOut.innerHTML = "You lost.  Click reset to play again.  "
 									playerLost = true;
+									updateHighScore();
 								}
 							} else {
 								msgOut.innerHTML = "Place down the card before drawing the next one."
@@ -271,6 +282,23 @@
 							}
 							msgOut.innerHTML = "You earned a powerup for your next round: " + name;
 						}
+					}
+				}
+				function updateScore(space) {
+					if (space != undefined) { //earning points from card placement
+						if (space.card.rank > 10) { //add 1 point for every picture card
+							currentScore++;
+							if (groups[space.groupNum-11].allRoyals()) { //add 4 points for completing a royalty
+								currentScore += 4;
+							}
+							currentScoreDisp.innerHTML = currentScore;
+						}
+					}
+				}
+				function updateHighScore() {
+					if (currentScore > localStorage.highScore) { //replace high score if current score is higher
+						localStorage.highScore = currentScore;
+						highScoreDisp.innerHTML = localStorage.highScore;
 					}
 				}
 
@@ -374,7 +402,7 @@
 			<!-- scoreboard, button region -->
 			<div id="scoreboard">
 				<button id="instructionOpen" onclick="toggleInstructions();">Instructions</button>
-				Current score: <span id="currentScore">0</span> High score: <span id="highScore">0</span>
+				Current score: <span id="currentScore">0</span> High score: <span id="highScore"></span>
 				<button id="reset" onclick="reset();">Reset</button>
 			<div>
 		</body>
