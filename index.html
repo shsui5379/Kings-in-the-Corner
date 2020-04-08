@@ -192,6 +192,39 @@
 									msgOut.innerHTML = "This card cannot go here.";
 									break;
 							}
+						} else { //removal phase
+							switch (true) {
+								case this.card == undefined: //if the space is empty
+									msgOut.innerHTML = "This space is empty.";
+									break;
+								case this.card.rank > 10: //remove only number cards
+									msgOut.innerHTML = "Picture cards remain."
+									break;
+								case this == broadcaster: //unselect
+									this.el.style.border = ""; 
+									broadcaster = undefined;
+									break;
+								case this.card.rank == 10 && broadcaster == undefined: //clicking a 10 card
+									this.el.src = "cardimages/target.png";
+									this.card = undefined;
+									break;
+								case this.card.rank < 10 && broadcaster == undefined:  //first card
+									broadcaster = this; //store
+									this.el.style.border = "solid 3px #69F0AE";
+									break;
+								case broadcaster != undefined && this != broadcaster: //second card
+									if (this.card.rank + broadcaster.card.rank == 10) { //detect if removable
+										this.el.src = "cardimages/target.png"; //removing
+										broadcaster.el.src = "cardimages/target.png";
+										this.card = undefined;
+										broadcaster.card = undefined;
+									} else {
+										msgOut.innerHTML = "These 2 cards do not sum to 10.";
+									}
+									broadcaster.el.style.border = ""; //unhighlight
+									broadcaster = undefined;
+									break;
+							}
 						}
 					}
 				}
