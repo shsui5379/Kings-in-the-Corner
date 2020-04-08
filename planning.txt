@@ -79,7 +79,7 @@ Call function to determine if the player should be awarded a powerup [done]
 Call function to determine if it's removal phase [done]
 
 Repeat while in removal phase:
-Call function to see if player won
-During removal phase, clicking a card space would store that Card into the broadcaster.  On click of a second card, sum the clicked space's Card's value with the broadcasted Card's value and determine if sum is 10, then those 2 card spaces lose their card property and use the blank space src
+Call function to see if player lost
+During removal phase, clicking a card space would store that Card into the broadcaster.  On click of a second card, sum the clicked space's Card's value with the broadcasted Card's value and determine if sum is 10, then those 2 card spaces lose their card property and use the blank space src [done]
 If the player has the triple play powerup and the powerup button is pressed, allow choosing 3 cards
 Call function to determine if player won
