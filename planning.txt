@@ -37,7 +37,7 @@ CardDeck: like an array, but has a shuffling and card drawing
 CardSpace: has a method for reading the broadcaster to determine if the drawn card can go there
     has properties to store which card is occupying the space and which board section it's located in
     to be added as a property of each card space element
-HTMLCollections have added methods for determining if all the spaces are occupied
+HTMLCollections have added methods for determining if all the spaces are occupied, and if they're all royals
 
 Interface:
 Image of a deck in the center (cardback) [done]
@@ -50,7 +50,7 @@ Reset button on bottom right [done]
 Score on bottom [done]
 Instructions button on bottom left [done]
 Message board below title to tell if player is in removal phase, powerups, win or lose [done]
-Button on right side for using powerup
+Button on right side for using powerup [done]
 
 
 Flow:
@@ -62,7 +62,7 @@ For each element of each collection, give them a CardSpace that's aware of which
 
 Repeat while not in removal phase: 
 When the center deck is clicked, set the broadcaster equal to the shift of the deck [done]
-if the player has the card peek powerup and powerup button is clicked, also show the next card next to the deck
+if the player has the card peek powerup and powerup button is clicked, also show the next card on the side [done]
 Replace the deck's src with the shifted card's [done]
 Call function to determine if the player lost yet [done]
 Player is to click on a space on the board.  [done]
