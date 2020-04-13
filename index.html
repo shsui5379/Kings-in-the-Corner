@@ -91,6 +91,14 @@
 				#messageBoard {
 					background-color: inherit;
 				}
+
+				/*powerups*/
+				#powerupActivate, #peek {
+					position: absolute;
+					top: 50%;
+					left: 1%;
+					display: none;
+				}
 			</style>
 			<script>
 				//initializations and objects
@@ -112,6 +120,8 @@
 					msgOut = document.getElementById("messageBoard");
 					currentScoreDisp = document.getElementById("currentScore");
 					highScoreDisp = document.getElementById("highScore");
+					powerupBtn = document.getElementById("powerupActivate");
+					peekCard = document.getElementById("peek");
 					
 					//deck
 					var deck = new CardDeck() //an empty deck
@@ -124,10 +134,12 @@
 					removalPhase = false;
 					broadcaster = undefined;
 					playerLost = false;
+					jump = false;
+					triplePlay = false;
 					if (localStorage.earnedPowerup == undefined) {
 						localStorage.earnedPowerup = 0; //apply next round
-					}
-					currentPowerup = localStorage.earnedPowerup; //11: jump, 12: triple play, 13: card peek
+					} //11: jump, 12: triple play, 13: card peek
+					currentPowerup = localStorage.earnedPowerup; //activate what was earned
 					localStorage.earnedPowerup = 0;
 					currentScore = 0;
 					if (localStorage.highScore == undefined) {
@@ -135,6 +147,15 @@
 					}
 
 					highScoreDisp.innerHTML = localStorage.highScore;
+
+					//powerups
+					if (currentPowerup == 13) { //showing buttons
+						powerupBtn.innerHTML = "Use Card Peek";
+						powerupBtn.style.display = "inline-block"
+					} else if (currentPowerup == 11) {
+						powerupBtn.innerHTML = "Use Jump";
+						powerupBtn.style.display = "inline-block";
+					}
 				}
 
 
@@ -175,6 +196,7 @@
 									msgOut.innerHTML = "This space is already occupied.";
 									break;
 								case validPlacement(this, broadcaster): //if the placement is valid, move card there
+									peekCard.style.display = "";
 									this.card = broadcaster;
 									this.el.src = broadcaster.imageSrc;
 									cardDeck.src = "cardimages/back-red-75-3.png";
@@ -268,7 +290,7 @@
 								msgOut.innerHTML = "Place down the card before drawing the next one."
 							}
 						} else {
-							msgOut.innerHTML = "You can't draw a card during the Removal Phase."
+							msgOut.innerHTML = "You can't draw a card right now."
 						}
 					}
 				}
@@ -315,6 +337,34 @@
 							}
 							msgOut.innerHTML = "You earned a powerup for your next round: " + name;
 						}
+					}
+				}
+				function powerup() { //using the powerup
+					switch(currentPowerup) {
+						case "11": //jump
+							if (broadcaster != undefined) { //if broadcaster is occupied
+								msgOut.innerHTML = "Place down the card first.  ";
+							} else if (document.getElementById("center").deck.length == 52) { //if no cards to move
+								msgOut.innerHTML = "There aren't any cards on the board yet.  ";
+							} else {
+								jump = true;
+								msgOut.innerHTML = "Select the card you want to move.  ";
+								powerupBtn.style.display = "";
+							}
+							break;
+						case "12": //triple play
+							triplePlay = true;
+							powerupBtn.style.display = "";
+							break;
+						case "13": //peek
+							if (broadcaster == undefined) { //if next card is drawable already
+								msgOut.innerHTML = "Draw a card first.  ";
+							} else {
+								peekCard.src = document.getElementById("center").deck[0].imageSrc;
+								peekCard.style.display = "inline";
+								powerupBtn.style.display = "";
+							}
+							break;
 					}
 				}
 				function updateScore(space) {
@@ -393,6 +443,10 @@
 
 				<img id="center" src="cardimages/back-red-75-3.png" onclick="this.deck.draw();" />
 			</span>
+
+			<!-- powerups -->
+			<button id="powerupActivate" onclick="powerup();"></button>
+			<img id="peek" />
 
 			<!-- instructions -->
 			<div id="instructionPopup">
