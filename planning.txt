@@ -72,7 +72,7 @@ On click of a space, check if the space already has a card property.  If not, ch
     Queens in the top/bottom
     Kings in the corner
     Everything else can go anywhere
-If the player has the jump powerup and presses the powerup button, the player can click on a card.  Check that the space does have a card then store it in the broadcastesr.  Then, the user can click on another space.  Check that the space doesn't already have a card, then check if the card is allowed to be moved there.  If so, attach that card to that space.  
+If the player has the jump powerup and presses the powerup button, the player can click on a card.  Check that the space does have a card then store it in the broadcastesr.  Then, the user can click on another space.  Check that the space doesn't already have a card, then check if the card is allowed to be moved there.  If so, attach that card to that space and remove the card from original space.  [done]
 On successful placement of a picture card, increase the score by 1. [done]
 Check if card placement completes a royalty.  If so, add 4 points [done]
 Call function to determine if the player should be awarded a powerup [done]
