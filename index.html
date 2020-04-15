@@ -187,52 +187,74 @@
 				CardSpace.prototype.select = function() { //onclick action of card spaces
 					if (!playerLost) {
 						msgClear();
-						if (!removalPhase) { //if it's not the removal phase
+						if (!removalPhase && !jump) { //if it's not the removal phase, nor is jump being used
+							if (broadcaster instanceof CardSpace) { //since jump's first click stores the CardSpace object and this algorith works with Card objects
+								var tempE = broadcaster.el;
+								var tempC = broadcaster.card;
+								broadcaster = tempC;
+								broadcaster.old = tempE;
+							}
 							switch (true) {
 								case broadcaster == undefined: //if a card hasn't been drawn
 									msgOut.innerHTML = "Draw a card first";
 									break;
 								case this.card != undefined: //if there's already a card there
-									msgOut.innerHTML = "This space is already occupied.";
+									if (this.el.style.border != "") { //unselectng a space when using jump
+										broadcaster = undefined;
+										jump = true;
+										this.el.style.border = "";
+									} else {
+										msgOut.innerHTML = "This space is already occupied.";
+									}
 									break;
 								case validPlacement(this, broadcaster): //if the placement is valid, move card there
 									peekCard.style.display = "";
 									this.card = broadcaster;
 									this.el.src = broadcaster.imageSrc;
 									cardDeck.src = "cardimages/back-red-75-3.png";
-									broadcaster = undefined;
 									if (localStorage.earnedPowerup == 0) { //determine if the player is elegible for a powerup (meaning hasn't earned one yet)
 										awardPowerup();
 									}
-									updateScore(this);
+									if (broadcaster.old == undefined) { //can't score again by cardjumping
+										updateScore(this);
+									} else { //clean out original card when jumping
+										broadcaster.old.style.border = "";
+										broadcaster.old.src = "cardimages/target.png";
+										broadcaster.old.space.card = undefined;
+									}
 									if (proceedToRemovalPhase()) { //check if all spaces are occupied
 										removalPhase = true;
 										msgOut.innerHTML = "REMOVAL PHASE";
 									}
+									broadcaster = undefined;
 									break;
 								default: //if placement is invalid
 									msgOut.innerHTML = "This card cannot go here.";
 									break;
 							}
-						} else { //removal phase
+						} else { //removal phase or selecting a card to jump
 							switch (true) {
 								case this.card == undefined: //if the space is empty
 									msgOut.innerHTML = "This space is empty.";
 									break;
-								case this.card.rank > 10: //remove only number cards
+								case this.card.rank > 10 && !jump: //remove only number cards in removal phase
 									msgOut.innerHTML = "Picture cards remain."
 									break;
 								case this == broadcaster: //unselect
 									this.el.style.border = ""; 
 									broadcaster = undefined;
 									break;
-								case this.card.rank == 10 && broadcaster == undefined: //clicking a 10 card
+								case this.card.rank == 10 && broadcaster == undefined && !jump: //clicking a 10 card during removal phase
 									this.el.src = "cardimages/target.png";
 									this.card = undefined;
 									break;
-								case this.card.rank < 10 && broadcaster == undefined:  //first card
+								case this.card.rank < 10 && broadcaster == undefined || jump:  //first card selection
 									broadcaster = this; //store
-									this.el.style.border = "solid 3px #69F0AE";
+									this.el.style.border = "solid 3px #69F0AE"; //highlight
+									if (jump) {
+										msgOut.innerHTML = "Pick a space to move that card to";
+									}
+									jump = false;
 									break;
 								case broadcaster != undefined && this != broadcaster: //second card
 									if (this.card.rank + broadcaster.card.rank == 10) { //detect if removable
@@ -277,7 +299,7 @@
 				CardDeck.prototype.draw = function() { //drawing a card
 					if (!playerLost) {
 						msgClear();
-						if (!removalPhase) { //can only draw a card when it's not removal phase
+						if (!removalPhase && !jump) { //can only draw a card when it's not removal phase
 							if (broadcaster == undefined) { //can only draw a card if the previously drawn card has been placed down
 								broadcaster = this.shift(); //broadcast what card has been drawn
 								this.el.src = broadcaster.imageSrc; //display the card that has been drawn
