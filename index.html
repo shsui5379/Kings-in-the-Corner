@@ -370,6 +370,7 @@
 								msgOut.innerHTML = "There aren't any cards on the board yet.  ";
 							} else {
 								jump = true;
+								currentPowerup = 0;
 								msgOut.innerHTML = "Select the card you want to move.  ";
 								powerupBtn.style.display = "";
 							}
@@ -377,6 +378,7 @@
 						case "12": //triple play
 							triplePlay = true;
 							powerupBtn.style.display = "";
+							currentPowerup = 0;
 							break;
 						case "13": //peek
 							if (broadcaster == undefined) { //if next card is drawable already
@@ -385,6 +387,7 @@
 								peekCard.src = document.getElementById("center").deck[0].imageSrc;
 								peekCard.style.display = "inline";
 								powerupBtn.style.display = "";
+								currentPowerup = 0;
 							}
 							break;
 					}
