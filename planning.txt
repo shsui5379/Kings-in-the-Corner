@@ -12,17 +12,17 @@ Functions:
 initialize to call objects to be created and attached to the appropriate html element [done]
 Un/hide the instructions [done]
 Reset that clears the board, score and prepares a new deck of cards
-Check if the player lost by: [done]
-    lost if broadcasted card:
+Checking for combos that add to 10
+Check if the player lost by: 
+    lost if broadcasted card: [done]
     Jack: Check if the side section indicates 4 occupied spaces
     Queen: Check top/bottom section for the same
-    King: Check thhe corner section for the same
-
-    During removal phase, the check would be getting the values of each Card from each section and see if there's any of them able to sum to 10.  Lose if it's not possible
-
+    King: Check the corner section for the same
+    When entering removal phase: check if there are no combos adding to 10 when all spaces are filled
+Check if player can exit removal phase by determining if there are no more combos adding to 10
 Check if it's the removal phase by checking each section to see if they all have 4 cards [done]
 Update score.  On placement of picture card, add 1.  For each section, if all of the cards are royals, add 4 points [done]
-Check if the player won, by going through each section to determine if any number cards are left
+Check if the player won when going into removal phase, by going through each section to determine if they're all royals
     on victory, add 12 points to score.  Then add x points, where x is the length of the CardDeck
 Check if the player should be awarded a powerup.  Check when a section has all 4 spaces occupied.  Then, check if the player got a powerup yet.  If not, then check if all 4 cards are royals.  If so: [done]
     4 Kings: give card peek
@@ -79,7 +79,7 @@ Call function to determine if the player should be awarded a powerup [done]
 Call function to determine if it's removal phase [done]
 
 Repeat while in removal phase:
-Call function to see if player lost
+Call function to see if player won or lost when entering removal phase
 During removal phase, clicking a card space would store that Card into the broadcaster.  On click of a second card, sum the clicked space's Card's value with the broadcasted Card's value and determine if sum is 10, then those 2 card spaces lose their card property and use the blank space src [done]
 If the player has the triple play powerup and the powerup button is pressed, allow choosing 3 cards
-Call function to determine if player won
+Call function to determine if player can return from removal phase
