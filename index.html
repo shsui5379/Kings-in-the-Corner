@@ -327,7 +327,44 @@
 				function validPlacement(space, card) { //determines if a card can go into a given space
 					return !(card.rank > 10 && card.rank != space.groupNum);
 				}
-				function lost() { //determine if player has lose
+				function getNumberCardRanks(spaces) { //returns an array of all the number cards' ranks from the board
+					var output = [];
+					for (var group of spaces) {
+						for (var el of group) {
+							if (el.space.card != undefined) {
+								if (el.space.card.rank <= 10) {
+									output.push(el.space.card.rank)
+								}
+							}
+						}
+					}
+					return output;
+				}
+				function tensComboRemain(numCardRanks) { //takes an array of numbers and returns a boolean based on whether combos that sum to 10 exist
+					var output = false;
+					switch(true) {
+						case numCardRanks.indexOf(10) != -1:
+							output = true;
+							break;
+						case numCardRanks.indexOf(1) != -1  && numCardRanks.indexOf(9) != -1:
+							output = true;
+							break;
+						case numCardRanks.indexOf(2) != -1 && numCardRanks.indexOf(8) != -1:
+							output = true;
+							break;
+						case numCardRanks.indexOf(3) != -1 && numCardRanks.indexOf(7) != -1:
+							output = true;
+							break;
+						case numCardRanks.indexOf(4) != -1 && numCardRanks.indexOf(6) != -1:
+							output = true;
+							break;
+						case numCardRanks.indexOf(5) != numCardRanks.lastIndexOf(5):
+							output = true;
+							break;
+					}
+					return output;
+				}
+				function lost() { //determine if player has lose (outside removal phase)
 					if (broadcaster.rank > 10) {
 						return groups[broadcaster.rank-11].allOccupied(); //for royals, which placement is restricted, check if its possible group is full	
 					}
