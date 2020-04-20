@@ -223,8 +223,14 @@
 										broadcaster.old.space.card = undefined;
 									}
 									if (proceedToRemovalPhase()) { //check if all spaces are occupied
-										removalPhase = true;
-										msgOut.innerHTML = "REMOVAL PHASE";
+										if (tensComboRemain(getNumberCardRanks(groups))) { //determine of the player have lost by going into removal phase
+											removalPhase = true;
+											msgOut.innerHTML = "REMOVAL PHASE";
+										} else {
+											playerLost = true;
+											msgOut.innerHTML = "You lost.  Click reset to play again.";
+											updateHighScore();
+										}
 									}
 									broadcaster = undefined;
 									break;
@@ -268,6 +274,10 @@
 									broadcaster.el.style.border = ""; //unhighlight
 									broadcaster = undefined;
 									break;
+							}
+							if (!tensComboRemain(getNumberCardRanks(groups))) { //determine if player can exit removal phase
+								removalPhase = false;
+								msgOut.innerHTML = "";
 							}
 						}
 					}
