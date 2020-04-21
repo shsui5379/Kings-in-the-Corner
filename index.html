@@ -133,7 +133,7 @@
 					//states
 					removalPhase = false;
 					broadcaster = undefined;
-					playerLost = false;
+					roundOver = false;
 					jump = false;
 					triplePlay = false;
 					if (localStorage.earnedPowerup == undefined) {
@@ -185,7 +185,7 @@
 					this.groupNum = loc; //11 is side, 12 is top/bottom, 13 is corner
 				}
 				CardSpace.prototype.select = function() { //onclick action of card spaces
-					if (!playerLost) {
+					if (!roundOver) {
 						msgClear();
 						if (!removalPhase && !jump) { //if it's not the removal phase, nor is jump being used
 							if (broadcaster instanceof CardSpace) { //since jump's first click stores the CardSpace object and this algorith works with Card objects
@@ -223,12 +223,18 @@
 										broadcaster.old.space.card = undefined;
 									}
 									if (proceedToRemovalPhase()) { //check if all spaces are occupied
-										if (tensComboRemain(getNumberCardRanks(groups))) { //determine of the player have lost by going into removal phase
+										if (tensComboRemain(getNumberCardRanks(groups))) { //determine of the player can play a removal phase
 											removalPhase = true;
 											msgOut.innerHTML = "REMOVAL PHASE";
 										} else {
-											playerLost = true;
-											msgOut.innerHTML = "You lost.  Click reset to play again.";
+											if (win()) { //determine and handle if the player won or lost as a result of inability to enter removal phase
+												msgOut.innerHTML = "Good job! You won the game! Click reset to play again. ";
+												currentScore += 12 + document.getElementById("center").deck.length;
+												updateScore();
+											} else {
+												msgOut.innerHTML = "You lost.  Click reset to play again.";
+											}
+											roundOver = true;
 											updateHighScore();
 										}
 									}
@@ -307,7 +313,7 @@
 					this.push.apply(this, temp); //replace the actual deck with the new shuffled one
 				}
 				CardDeck.prototype.draw = function() { //drawing a card
-					if (!playerLost) {
+					if (!roundOver) {
 						msgClear();
 						if (!removalPhase && !jump) { //can only draw a card when it's not removal phase
 							if (broadcaster == undefined) { //can only draw a card if the previously drawn card has been placed down
@@ -315,7 +321,7 @@
 								this.el.src = broadcaster.imageSrc; //display the card that has been drawn
 								if (lost()) { //check if card is placable
 									msgOut.innerHTML = "You lost.  Click reset to play again.  "
-									playerLost = true;
+									roundOver = true;
 									updateHighScore();
 								}
 							} else {
@@ -379,6 +385,14 @@
 						return groups[broadcaster.rank-11].allOccupied(); //for royals, which placement is restricted, check if its possible group is full	
 					}
 					return false;
+				}
+				function win() { //determine if the whole board is occupied by royals (player won)
+					for (var group of groups) {
+						if (!group.allRoyals()) {
+							return false;
+						}
+					}
+					return true;
 				}
 				function proceedToRemovalPhase() { //check if all spaces are occupied
 					for (var group of groups) {
@@ -446,9 +460,9 @@
 							if (groups[space.groupNum-11].allRoyals()) { //add 4 points for completing a royalty
 								currentScore += 4;
 							}
-							currentScoreDisp.innerHTML = currentScore;
 						}
 					}
+					currentScoreDisp.innerHTML = currentScore;
 				}
 				function updateHighScore() {
 					if (currentScore > localStorage.highScore) { //replace high score if current score is higher
