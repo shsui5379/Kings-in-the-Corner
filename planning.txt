@@ -22,7 +22,7 @@ Check if the player lost by:
 Check if player can exit removal phase by determining if there are no more combos adding to 10 [done]
 Check if it's the removal phase by checking each section to see if they all have 4 cards [done]
 Update score.  On placement of picture card, add 1.  For each section, if all of the cards are royals, add 4 points [done]
-Check if the player won when going into removal phase, by going through each section to determine if they're all royals
+Check if the player won when going into removal phase, by going through each section to determine if they're all royals [done]
     on victory, add 12 points to score.  Then add x points, where x is the length of the CardDeck
 Check if the player should be awarded a powerup.  Check when a section has all 4 spaces occupied.  Then, check if the player got a powerup yet.  If not, then check if all 4 cards are royals.  If so: [done]
     4 Kings: give card peek
