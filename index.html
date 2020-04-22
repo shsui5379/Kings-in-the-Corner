@@ -130,25 +130,33 @@
 					cardDeck.deck = deck; //attach to element
 					cardDeck.deck.el = cardDeck; //path back to the element
 
-					//states
+					setStates();
+					powerupBtnVisibility();
+				}
+				function setStates() {
+					//flags
 					removalPhase = false;
 					broadcaster = undefined;
 					roundOver = false;
 					jump = false;
 					triplePlay = false;
-					if (localStorage.earnedPowerup == undefined) {
-						localStorage.earnedPowerup = 0; //apply next round
-					} //11: jump, 12: triple play, 13: card peek
-					currentPowerup = localStorage.earnedPowerup; //activate what was earned
-					localStorage.earnedPowerup = 0;
-					currentScore = 0;
-					if (localStorage.highScore == undefined) {
-						localStorage.highScore = 0;
-					}
-
-					highScoreDisp.innerHTML = localStorage.highScore;
 
 					//powerups
+					if (localStorage.earnedPowerup == undefined) { //initialize variable
+						localStorage.earnedPowerup = 0; 
+					} //11: jump, 12: triple play, 13: card peek
+					currentPowerup = localStorage.earnedPowerup; //activate what was earned last round
+					localStorage.earnedPowerup = 0;
+
+					//scores
+					currentScore = 0;
+					if (localStorage.highScore == undefined) { //initialize variable
+						localStorage.highScore = 0;
+					}
+					updateScore();
+					updateHighScore();
+				}
+				function powerupBtnVisibility() { //todo: hide on 0 (aka when reseted or unused)
 					if (currentPowerup == 13) { //showing buttons
 						powerupBtn.innerHTML = "Use Card Peek";
 						powerupBtn.style.display = "inline-block"
@@ -157,7 +165,6 @@
 						powerupBtn.style.display = "inline-block";
 					}
 				}
-
 
 				//adding functions to HTMLCollections
 				HTMLCollection.prototype.allOccupied = function() { //determine if all the CardSpaces in the group is occupied
@@ -229,7 +236,7 @@
 										} else {
 											if (win()) { //determine and handle if the player won or lost as a result of inability to enter removal phase
 												msgOut.innerHTML = "Good job! You won the game! Click reset to play again. ";
-												currentScore += 12 + document.getElementById("center").deck.length;
+												currentScore += 12 + cardDeck.deck.length;
 												updateScore();
 											} else {
 												msgOut.innerHTML = "You lost.  Click reset to play again.";
@@ -427,7 +434,7 @@
 						case "11": //jump
 							if (broadcaster != undefined) { //if broadcaster is occupied
 								msgOut.innerHTML = "Place down the card first.  ";
-							} else if (document.getElementById("center").deck.length == 52) { //if no cards to move
+							} else if (cardDeck.deck.length == 52) { //if no cards to move
 								msgOut.innerHTML = "There aren't any cards on the board yet.  ";
 							} else {
 								jump = true;
@@ -445,7 +452,7 @@
 							if (broadcaster == undefined) { //if next card is drawable already
 								msgOut.innerHTML = "Draw a card first.  ";
 							} else {
-								peekCard.src = document.getElementById("center").deck[0].imageSrc;
+								peekCard.src = cardDeck.deck[0].imageSrc;
 								peekCard.style.display = "inline";
 								powerupBtn.style.display = "";
 								currentPowerup = 0;
@@ -467,8 +474,8 @@
 				function updateHighScore() {
 					if (currentScore > localStorage.highScore) { //replace high score if current score is higher
 						localStorage.highScore = currentScore;
-						highScoreDisp.innerHTML = localStorage.highScore;
 					}
+					highScoreDisp.innerHTML = localStorage.highScore;
 				}
 
 				//controls
@@ -490,7 +497,23 @@
 				}
 				function reset() { //reset round
 					if(confirm("Are you sure you want to reset this round?  This cannot be undone.")) {
+						for (var group of groups) { //resetting board
+							for (var el of group) {
+								el.src = "cardimages/target.png"; //reset space appearance
+								el.space.card = undefined; //detach cards
+								el.style.border = "";
+							}
+						}
 
+						cardDeck.deck.splice(0, cardDeck.deck.length); //generate a new deck
+						cardDeck.deck.populate();
+						cardDeck.deck.shuffle();
+						cardDeck.src = "cardimages/back-red-75-3.png";
+
+						msgOut.innerHTML = "";
+
+						setStates();
+						powerupBtnVisibility();
 					}
 				}
 			</script>
