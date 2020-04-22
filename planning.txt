@@ -11,8 +11,8 @@ powerup storage
 Functions:
 initialize to call objects to be created and attached to the appropriate html element [done]
 Un/hide the instructions [done]
-Reset that clears the board, score and prepares a new deck of cards
-Checking for combos that add to 10 [done]
+Reset that clears the board, score and prepares a new deck of cards [done]
+Checking for combos that add to 10, by checking for the existance of 10, 5 where first index != last index, 1+9, 2+8, 3+7, 4+6 [done]
 Check if the player lost by: 
     lost if broadcasted card: [done]
     Jack: Check if the side section indicates 4 occupied spaces
