@@ -156,17 +156,8 @@
 					updateScore();
 					updateHighScore();
 				}
-				function powerupBtnVisibility() { //todo: hide on 0 (aka when reseted or unused)
-					if (currentPowerup == 13) { //showing buttons
-						powerupBtn.innerHTML = "Use Card Peek";
-						powerupBtn.style.display = "inline-block"
-					} else if (currentPowerup == 11) {
-						powerupBtn.innerHTML = "Use Jump";
-						powerupBtn.style.display = "inline-block";
-					}
-				}
 
-				//adding functions to HTMLCollections
+				//adding methods to HTMLCollections
 				HTMLCollection.prototype.allOccupied = function() { //determine if all the CardSpaces in the group is occupied
 					for (var el of this) {
 						if (el.space.card == undefined) {
@@ -233,6 +224,7 @@
 										if (tensComboRemain(getNumberCardRanks(groups))) { //determine of the player can play a removal phase
 											removalPhase = true;
 											msgOut.innerHTML = "REMOVAL PHASE";
+											powerupBtnVisibility();
 										} else {
 											if (win()) { //determine and handle if the player won or lost as a result of inability to enter removal phase
 												msgOut.innerHTML = "Good job! You won the game! Click reset to play again. ";
@@ -291,6 +283,7 @@
 							if (!tensComboRemain(getNumberCardRanks(groups))) { //determine if player can exit removal phase
 								removalPhase = false;
 								msgOut.innerHTML = "";
+								powerupBtnVisibility();
 							}
 						}
 					}
@@ -409,7 +402,8 @@
 					}
 					return true;
 				}
-				
+
+				//controls
 				function awardPowerup() { //awards powerup based on 
 					for (var group of groups) {
 						if (group.allRoyals()) {
@@ -427,6 +421,25 @@
 							}
 							msgOut.innerHTML = "You earned a powerup for your next round: " + name;
 						}
+					}
+				}
+				function powerupBtnVisibility() { //when to show the powerup button
+					switch(true) {
+						case currentPowerup == 13 && !removalPhase:
+							powerupBtn.innerHTML = "Use Card Peek";
+							powerupBtn.style.display = "inline-block";
+							break;
+						case currentPowerup == 11 && !removalPhase:
+							powerupBtn.innerHTML = "Use Jump";
+							powerupBtn.style.display = "inline-block";
+							break;
+						case currentPowerup == 12 && removalPhase:
+							powerupBtn.innerHTML = "Use Triple Play";
+							powerupBtn.style.display = "inline-block";
+							break;
+						default:
+							powerupBtn.style.display = "";
+							break;
 					}
 				}
 				function powerup() { //using the powerup
@@ -477,8 +490,6 @@
 					}
 					highScoreDisp.innerHTML = localStorage.highScore;
 				}
-
-				//controls
 				function msgClear() { //clear error messages from message board
 					if (removalPhase) {
 						msgOut.innerHTML = "REMOVAL PHASE";
@@ -600,7 +611,7 @@
 			<!-- scoreboard, button region -->
 			<div id="scoreboard">
 				<button id="instructionOpen" onclick="toggleInstructions();">Instructions</button>
-				Current score: <span id="currentScore">0</span> High score: <span id="highScore"></span>
+				Current score: <span id="currentScore"></span> High score: <span id="highScore"></span>
 				<button id="reset" onclick="reset();">Reset</button>
 			<div>
 		</body>
