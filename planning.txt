@@ -9,10 +9,19 @@ Boolean to determine if it's removal phase
 powerup storage
 
 Functions:
+rng [done]
+toggle instructions [done]
 initialize to call objects to be created and attached to the appropriate html element [done]
 Un/hide the instructions [done]
 Reset that clears the board, score and prepares a new deck of cards [done]
 Checking for combos that add to 10, by checking for the existance of 10, 5 where first index != last index, 1+9, 2+8, 3+7, 4+6 [done]
+^and a version of that for triple play
+check if a card can go in a space [done]
+    Allowed spaces: 
+    Jacks in the sides
+    Queens in the top/bottom
+    Kings in the corner
+    Everything else can go anywhere
 Check if the player lost by: 
     lost if broadcasted card: [done]
     Jack: Check if the side section indicates 4 occupied spaces
@@ -28,6 +37,12 @@ Check if the player should be awarded a powerup.  Check when a section has all 4
     4 Kings: give card peek
     4 Queens: give triple player
     4 Jacks: give jump
+powerup button visibiliy [done]
+    no powerup: hide
+    jump or peek: show during non-removal phase only
+    triple play: show during removal phase only
+execution of powerups
+updating score and high score [done]
 
 
 Objects: [done]
