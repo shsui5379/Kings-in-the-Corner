@@ -101,13 +101,16 @@
 				}
 			</style>
 			<script>
+				const TARGET = "cardimages/target.png";
+				const BACK = "cardimages/back-red-75-3.png";
+
 				//initializations and objects
 				function initialize() {
 					//attaching objects
 					groups = [document.getElementsByClassName("side"), document.getElementsByClassName("top"), document.getElementsByClassName("corner")];
 					for (var i = 0; i < groups.length; i++) { 
 						for (var el of groups[i]) {
-							el.src = "cardimages/target.png";
+							el.src = TARGET;
 							el.space = new CardSpace(i+11); //represent each card space element from the front end as an object in the back end
 							el.space.el = el; //path back to element
 							el.onclick = function() {this.space.select();}
@@ -137,6 +140,7 @@
 					//flags
 					removalPhase = false;
 					broadcaster = undefined;
+					broadcaster2 = undefined; //for triple play
 					roundOver = false;
 					jump = false;
 					triplePlay = false;
@@ -209,7 +213,7 @@
 									peekCard.style.display = "";
 									this.card = broadcaster;
 									this.el.src = broadcaster.imageSrc;
-									cardDeck.src = "cardimages/back-red-75-3.png";
+									cardDeck.src = BACK;
 									if (localStorage.earnedPowerup == 0) { //determine if the player is elegible for a powerup (meaning hasn't earned one yet)
 										awardPowerup();
 									}
@@ -217,7 +221,7 @@
 										updateScore(this);
 									} else { //clean out original card when jumping
 										broadcaster.old.style.border = "";
-										broadcaster.old.src = "cardimages/target.png";
+										broadcaster.old.src = TARGET;
 										broadcaster.old.space.card = undefined;
 									}
 									if (proceedToRemovalPhase()) { //check if all spaces are occupied
@@ -251,33 +255,50 @@
 								case this.card.rank > 10 && !jump: //remove only number cards in removal phase
 									msgOut.innerHTML = "Picture cards remain."
 									break;
-								case this == broadcaster: //unselect
+								case this == broadcaster || this == broadcaster2: //unselect
 									this.el.style.border = ""; 
-									broadcaster = undefined;
+									if (this == broadcaster) {
+										broadcaster = undefined;
+									} else {
+										broadcaster2 = undefined;
+									}
 									break;
-								case this.card.rank == 10 && broadcaster == undefined && !jump: //clicking a 10 card during removal phase
-									this.el.src = "cardimages/target.png";
+								case this.card.rank == 10 && broadcaster == undefined && !jump && !triplePlay: //clicking a 10 card during removal phase
+									this.el.src = TARGET;
 									this.card = undefined;
 									break;
-								case this.card.rank < 10 && broadcaster == undefined || jump:  //first card selection
-									broadcaster = this; //store
+								case this.card.rank <= 10 && (broadcaster == undefined || (broadcaster2 == undefined && triplePlay)) || jump:  //selection of not the last card
+									if (broadcaster2 == undefined && triplePlay) { //store space
+										broadcaster2 = this;
+									} else {
+										broadcaster = this; 
+									}
 									this.el.style.border = "solid 3px #69F0AE"; //highlight
 									if (jump) {
 										msgOut.innerHTML = "Pick a space to move that card to";
 									}
 									jump = false;
 									break;
-								case broadcaster != undefined && this != broadcaster: //second card
-									if (this.card.rank + broadcaster.card.rank == 10) { //detect if removable
-										this.el.src = "cardimages/target.png"; //removing
-										broadcaster.el.src = "cardimages/target.png";
+								case (broadcaster != undefined && !triplePlay) || (broadcaster2 != undefined && triplePlay): //last card
+									if ((this.card.rank + broadcaster.card.rank == 10 && !triplePlay) || (this.card.rank + broadcaster.card.rank + broadcaster2.card.rank == 10 && triplePlay)) { //detect if removable
+										this.el.src = TARGET; //removing
+										broadcaster.el.src = TARGET;
 										this.card = undefined;
 										broadcaster.card = undefined;
+										if (triplePlay) {
+											broadcaster2.el.src = TARGET;
+											broadcaster2.card = undefined;
+											triplePlay = false;
+										}
 									} else {
-										msgOut.innerHTML = "These 2 cards do not sum to 10.";
+										msgOut.innerHTML = "These cards do not sum to 10.";
 									}
 									broadcaster.el.style.border = ""; //unhighlight
+									if (broadcaster2 != undefined) {
+										broadcaster2.el.style.border = "";
+									}
 									broadcaster = undefined;
+									broadcaster2 = undefined;
 									break;
 							}
 							if (!tensComboRemain(getNumberCardRanks(groups))) { //determine if player can exit removal phase
@@ -380,6 +401,18 @@
 					}
 					return output;
 				}
+				function tripleTensComboRemain(numCardRanks) {
+					for (var a=0; a<numCardRanks.length-1; a++) {
+						for (var b=a+1; b<numCardRanks.length-1; b++) {
+							for (var c=b+1; c<numCardRanks.length-1; c++) {
+								if (numCardRanks[a]+numCardRanks[b]+numCardRanks[c] == 10) {
+									return true;
+								}
+							}
+						}
+					}
+					return false;
+				}
 				function lost() { //determine if player has lose (outside removal phase)
 					if (broadcaster.rank > 10) {
 						return groups[broadcaster.rank-11].allOccupied(); //for royals, which placement is restricted, check if its possible group is full	
@@ -457,9 +490,14 @@
 							}
 							break;
 						case "12": //triple play
-							triplePlay = true;
-							powerupBtn.style.display = "";
-							currentPowerup = 0;
+							if (tripleTensComboRemain(getNumberCardRanks(groups))) {
+								triplePlay = true;
+								powerupBtn.style.display = "";
+								currentPowerup = 0;
+								msgOut.innerHTML = "You can now select 3 cards to remove."
+							} else {
+								msgOut.innerHTML = "A triple play cannot be used right now."
+							}
 							break;
 						case "13": //peek
 							if (broadcaster == undefined) { //if next card is drawable already
@@ -510,7 +548,7 @@
 					if(confirm("Are you sure you want to reset this round?  This cannot be undone.")) {
 						for (var group of groups) { //resetting board
 							for (var el of group) {
-								el.src = "cardimages/target.png"; //reset space appearance
+								el.src = TARGET; //reset space appearance
 								el.space.card = undefined; //detach cards
 								el.style.border = "";
 							}
@@ -519,7 +557,7 @@
 						cardDeck.deck.splice(0, cardDeck.deck.length); //generate a new deck
 						cardDeck.deck.populate();
 						cardDeck.deck.shuffle();
-						cardDeck.src = "cardimages/back-red-75-3.png";
+						cardDeck.src = BACK;
 
 						msgOut.innerHTML = "";
 
