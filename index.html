@@ -1,656 +1,669 @@
 <!doctype html>
-	<html>
-		<head>
-			<link href="https://fonts.googleapis.com/css?family=Press+Start+2P&display=swap" rel="stylesheet">
-			<title>Kings in the Corner</title>
-			<link rel="shortcut icon" type="image/png" href="cardimages/back-red-75-3.png"/>
-			<style>
-				/*general*/
-				body, button, div {
-					background-color: #ffbd38;
-					font: 400 30px TW Cen MT;
-					margin: 16px 0px;
-					text-align: center;
-				}
-				h1 {
-					text-align: center;
-					font: 300 50pt "Press Start 2P";
+<html>
+	<head>
+		<link href="https://fonts.googleapis.com/css?family=Press+Start+2P&display=swap" rel="stylesheet">
+		<title>Kings in the Corner</title>
+		<link rel="shortcut icon" type="image/png" href="cardimages/back-red-75-3.png"/>
+		<style>
+			/*general*/
+			body, button, div {
+				background-color: #ffbd38;
+				font: 400 30px TW Cen MT;
+				margin: 16px 0px;
+				text-align: center;
+			}
+			h1 {
+				text-align: center;
+				font: 300 50pt "Press Start 2P";
+			}
+
+			/*scoreboard, buttons region*/
+			#scoreboard, #instructionOpen, #reset {
+				position: absolute;
+				background-color: inherit;
+			}
+			#scoreboard {
+				bottom: 1%;
+				width: 100%;
+			}
+			#instructionOpen {
+				left: 1%;
+			}
+			#reset {
+				right: 1%;
+			}
+
+			/*buttons*/
+			button {
+				border-radius: 4px;
+				height: 36px;
+				padding: 0px 16px;
+				margin: 8px 14px;
+				outline: none;
+			}
+			button:hover {
+				box-shadow: 0px 2px 4px -1px rgba(0,0,0,.2), 0px 4px 5px 0px rgba(0,0,0,.14), 0px 1px 10px 0px rgba(0,0,0,.12);
+			}
+			button:active {
+				box-shadow: 0px 5px 5px -3px rgba(0,0,0,.2), 0px 8px 10px 1px rgba(0,0,0,.14), 0px 3px 14px 2px rgba(0,0,0,.12);
+			}
+
+			/*cards*/
+			.blank {
+				width: 75px;
+				height: 108px;
+				display: inline-block;
+			}
+			#center {
+				position: relative;
+				top: -296px;
+				box-shadow: 2px 2px 0px 1px white;
+			}
+
+			/*instructions*/
+			#instructionPopup {
+				display: none;
+				width: 76%;
+				font-size: 15pt;
+				position: absolute;
+				top: 10%;
+				left: 12%;
+				z-index: 1;
+				box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);
+				border-radius: 4px;
+			}
+			h6 {
+				font-size: 25pt;
+				margin: 20px 0px;
+				font-weight: 500;
+				text-decoration: underline;
+			}
+			ul {
+				display: inline-block;
+			}
+			p {
+				margin: 0px;
+			}
+			#instructionClose {
+				margin: 20px;
+			}
+
+			#messageBoard {
+				background-color: inherit;
+			}
+
+			/*powerups*/
+			#powerupActivate, #peek {
+				position: absolute;
+				top: 50%;
+				left: 1%;
+				display: none;
+			}
+		</style>
+		<script>
+			const TARGET = "cardimages/target.png";
+			const BACK = "cardimages/back-red-75-3.png";
+
+			//initializations and objects
+			function initialize() {
+				//attaching objects
+				groups = [document.getElementsByClassName("side"), document.getElementsByClassName("top"), document.getElementsByClassName("corner")];
+				for (var i = 0; i < groups.length; i++) { 
+					for (var el of groups[i]) {
+						el.src = TARGET;
+						el.space = new CardSpace(i+11); //represent each card space element from the front end as an object in the back end
+						el.space.el = el; //path back to element
+						el.onclick = function() {this.space.select();}
+					}
 				}
 
-				/*scoreboard, buttons region*/
-				#scoreboard, #instructionOpen, #reset {
-					position: absolute;
-					background-color: inherit;
-				}
-				#scoreboard {
-					bottom: 1%;
-					width: 100%;
-				}
-				#instructionOpen {
-					left: 1%;
-				}
-				#reset {
-					right: 1%;
-				}
+				//elements
+				cardDeck = document.getElementById("center");
+				instructionState = document.getElementById("instructionPopup");
+				msgOut = document.getElementById("messageBoard");
+				currentScoreDisp = document.getElementById("currentScore");
+				highScoreDisp = document.getElementById("highScore");
+				powerupBtn = document.getElementById("powerupActivate");
+				peekCard = document.getElementById("peek");
+				
+				//deck
+				var deck = new CardDeck() //an empty deck
+				deck.populate(); //fill the deck
+				deck.shuffle(); //shuffle the deck
+				cardDeck.deck = deck; //attach to element
+				cardDeck.deck.el = cardDeck; //path back to the element
 
-				/*buttons*/
-				button {
-					border-radius: 4px;
-					height: 36px;
-					padding: 0px 16px;
-					margin: 8px 14px;
-					outline: none;
-				}
-				button:hover {
-					box-shadow: 0px 2px 4px -1px rgba(0,0,0,.2), 0px 4px 5px 0px rgba(0,0,0,.14), 0px 1px 10px 0px rgba(0,0,0,.12);
-				}
-				button:active {
-					box-shadow: 0px 5px 5px -3px rgba(0,0,0,.2), 0px 8px 10px 1px rgba(0,0,0,.14), 0px 3px 14px 2px rgba(0,0,0,.12);
-				}
+				setStates();
+				powerupBtnVisibility();
+			}
+			function setStates() {
+				//flags
+				removalPhase = false;
+				broadcaster = undefined;
+				broadcaster2 = undefined; //for triple play
+				roundOver = false;
+				jump = false;
+				triplePlay = false;
 
-				/*cards*/
-				.blank {
-					width: 75px;
-					height: 108px;
-					display: inline-block;
-				}
-				#center {
-					position: relative;
-					top: -296px;
-					box-shadow: 2px 2px 0px 1px white;
-				}
+				//powerups
+				if (localStorage.earnedPowerup == undefined) { //initialize variable  for tracking what powerup the player just earned
+					localStorage.earnedPowerup = 0; 
+				} //11: jump, 12: triple play, 13: card peek
+				currentPowerup = localStorage.earnedPowerup; //activate what was earned last round
+				localStorage.earnedPowerup = 0;
 
-				/*instructions*/
-				#instructionPopup {
-					display: none;
-					width: 76%;
-					font-size: 15pt;
-					position: absolute;
-					top: 10%;
-					left: 12%;
-					z-index: 1;
-					box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);
-					border-radius: 4px;
+				//scores
+				currentScore = 0;
+				if (localStorage.highScore == undefined) { //initialize variable
+					localStorage.highScore = 0;
 				}
-				h6 {
-					font-size: 25pt;
-					margin: 20px 0px;
-					font-weight: 500;
-					text-decoration: underline;
-				}
-				ul {
-					display: inline-block;
-				}
-				p {
-					margin: 0px;
-				}
-				#instructionClose {
-					margin: 20px;
-				}
+				updateScore();
+				updateHighScore();
+			}
 
-				#messageBoard {
-					background-color: inherit;
+			//adding methods to HTMLCollections
+			HTMLCollection.prototype.allOccupied = function() { //determine if all the CardSpaces in the group are occupied
+				for (var el of this) {
+					if (el.space.card == undefined) {
+						return false;
+					}
 				}
-
-				/*powerups*/
-				#powerupActivate, #peek {
-					position: absolute;
-					top: 50%;
-					left: 1%;
-					display: none;
+				return true;
+			}
+			HTMLCollection.prototype.allRoyals = function() { //determines if there are 4 royals in that group
+				if (this.allOccupied()) { //all spaces should be occupied first
+					for (var el of this) {
+						if (el.space.card.rank != el.space.groupNum) {
+							return false;
+						}
+					}
+					return true;
 				}
-			</style>
-			<script>
-				const TARGET = "cardimages/target.png";
-				const BACK = "cardimages/back-red-75-3.png";
+				return false;
+			}
+			
+			//CardSpace
+			function CardSpace(loc) { //the individual card spaces 
+				this.groupNum = loc; //11 is side, 12 is top/bottom, 13 is corner
+			}
+			CardSpace.prototype.select = function() { //onclick action of card spaces
+				if (!roundOver) {
+					msgClear();
+					if (!removalPhase && !jump) { //placing down cards when it's not the removal phase, nor is the player picking a card to jump
+						if (broadcaster instanceof CardSpace) { //since jump's first click stores the CardSpace object and this algorith works with Card objects
+							var tempE = broadcaster.el;
+							var tempC = broadcaster.card;
+							broadcaster = tempC;
+							broadcaster.old = tempE; //path to where the card used to be before jump
+						}
+						switch (true) {
+							case broadcaster == undefined: //if a card hasn't been drawn
+								msgOut.innerHTML = "Draw a card first";
+								break;
+							case this.card != undefined: //if there's already a card there
+								if (this.el.style.border != "") { //unselectng a space when using jump
+									broadcaster = undefined;
+									jump = true;
+									this.el.style.border = "";
+								} else {
+									msgOut.innerHTML = "This space is already occupied.";
+								}
+								break;
+							case validPlacement(this, broadcaster): //if the placement is valid, move card there
+								peekCard.style.display = "";
+								this.card = broadcaster;
+								this.el.src = broadcaster.imageSrc;
+								cardDeck.src = BACK;
+								if (localStorage.earnedPowerup == 0) { //determine if the player is elegible for a powerup (meaning hasn't earned one yet)
+									awardPowerup();
+								}
+								if (broadcaster.old == undefined) { //can't score again by cardjumping
+									updateScore(this);
+								} else { //clean out original card when jumping
+									broadcaster.old.style.border = "";
+									broadcaster.old.src = TARGET;
+									broadcaster.old.space.card = undefined;
+								}
+								if (proceedToRemovalPhase()) { //check if all spaces are occupied
+									if (tensComboRemain(getNumberCardRanks(groups))) { //determine of the player can play a removal phase - combos left
+										removalPhase = true;
+										msgOut.innerHTML = "REMOVAL PHASE";
+										powerupBtnVisibility();
+									} else { //can't enter - end round
+										if (win()) { //determine and handle if the player won or lost as a result of inability to enter removal phase - all royals
+											msgOut.innerHTML = "Good job! You won the game! Click reset to play again. ";
+											currentScore += 12 + cardDeck.deck.length;
+											updateScore();
+										} else { //lost
+											msgOut.innerHTML = "You lost.  Click reset to play again.";
+										}
+										roundOver = true;
+										updateHighScore();
+									}
+								}
+								broadcaster = undefined;
+								break;
+							default: //if placement is invalid
+								msgOut.innerHTML = "This card cannot go here.";
+								break;
+						}
+					} else { //removal phase or selecting a card to jump
+						switch (true) {
+							case this.card == undefined: //if the space is empty
+								msgOut.innerHTML = "This space is empty.";
+								break;
+							case this.card.rank > 10 && !jump: //remove only number cards in removal phase
+								msgOut.innerHTML = "Picture cards remain."
+								break;
+							case this == broadcaster || this == broadcaster2: //unselect
+								this.el.style.border = ""; 
+								if (this == broadcaster) {
+									broadcaster = undefined;
+								} else {
+									broadcaster2 = undefined;
+								}
+								break;
+							case this.card.rank == 10 && broadcaster == undefined && !jump && !triplePlay: //clicking a 10 card during removal phase
+								this.el.src = TARGET;
+								this.card = undefined;
+								break;
+							case this.card.rank <= 10 && (broadcaster == undefined || (broadcaster2 == undefined && triplePlay)) || jump:  //selection of not the last card
+								if (broadcaster2 == undefined && triplePlay) { //store space
+									broadcaster2 = this;
+								} else {
+									broadcaster = this; 
+								}
+								this.el.style.border = "solid 3px #69F0AE"; //highlight
+								if (jump) {
+									msgOut.innerHTML = "Pick a space to move that card to";
+								}
+								jump = false;
+								break;
+							case broadcaster != undefined && !triplePlay: //last card
+								if (this.card.rank + broadcaster.card.rank == 10) { //detect if removable sum to 10
+									this.el.src = TARGET; //removing
+									broadcaster.el.src = TARGET;
+									this.card = undefined;
+									broadcaster.card = undefined;
+								} else {
+									msgOut.innerHTML = "These cards do not sum to 10.";
+								}
+								broadcaster.el.style.border = ""; //unhighlight
+								broadcaster = undefined;
+								break;
+							case broadcaster2 != undefined: //last card - triple play
+								if (this.card.rank + broadcaster.card.rank + broadcaster2.card.rank == 10) {
+									this.el.src = TARGET;
+									broadcaster.el.src = TARGET;
+									broadcaster2.el.src = TARGET;
+									this.card = undefined;
+									broadcaster.card = undefined;
+									broadcaster2.card = undefined;
+									triplePlay = false;
+								} else {
+									msgOut.innerHTML = "These cards do not sum to 10.";
+								}
+								broadcaster.el.style.border = "";
+								broadcaster2.el.style.border = "";
+								broadcaster = undefined;
+								broadcaster2 = undefined;
+								break;
+						}
+						if (!tensComboRemain(getNumberCardRanks(groups))) { //determine if player can exit removal phase - any combos left to remove
+							removalPhase = false;
+							msgOut.innerHTML = "";
+							powerupBtnVisibility();
+						}
+					}
+				}
+			}
 
-				//initializations and objects
-				function initialize() {
-					//attaching objects
-					groups = [document.getElementsByClassName("side"), document.getElementsByClassName("top"), document.getElementsByClassName("corner")];
-					for (var i = 0; i < groups.length; i++) { 
-						for (var el of groups[i]) {
-							el.src = TARGET;
-							el.space = new CardSpace(i+11); //represent each card space element from the front end as an object in the back end
-							el.space.el = el; //path back to element
-							el.onclick = function() {this.space.select();}
+			//Card
+			function Card(s, r) { //the individual cards
+				this.rank = r;
+				this.imageSrc = "cardimages/"+r+"-"+s+".png";
+			}
+
+			//CardDeck
+			function CardDeck() {} //a deck of cards
+			CardDeck.prototype = Array.prototype; //like an array
+			CardDeck.prototype.populate = function() { //fills the deck with a standard deck
+				for (var r=1; r!=14; r++) { //ranks
+					for (var s=0; s!=4; s++) { //suits
+						this.push(new Card(s, r));
+					}
+				}
+			}
+			CardDeck.prototype.shuffle = function() { //shuffling the deck of cards
+				var temp = [];
+				while (this.length != 0) {
+					temp.push((this.splice(randomInteger(0, this.length-1), 1))[0]); //pull cards from random order into a temporary deck
+				}
+				this.push.apply(this, temp); //replace the actual deck with the new shuffled one
+			}
+			CardDeck.prototype.draw = function() { //drawing a card
+				if (!roundOver) {
+					msgClear();
+					if (!removalPhase && !jump) { //can only draw a card when it's not removal phase
+						if (broadcaster == undefined) { //can only draw a card if the previously drawn card has been placed down
+							broadcaster = this.shift(); //broadcast what card has been drawn
+							this.el.src = broadcaster.imageSrc; //display the card that has been drawn
+							if (lost()) { //check if card is placable
+								msgOut.innerHTML = "You lost.  Click reset to play again.  "
+								roundOver = true;
+								updateHighScore();
+							}
+						} else {
+							msgOut.innerHTML = "Place down the card before drawing the next one."
+						}
+					} else {
+						msgOut.innerHTML = "You can't draw a card right now."
+					}
+				}
+			}
+
+
+			//tools
+			function randomInteger(lower, upper) {  //random number generator
+				var multiplier = upper - lower + 1;
+				var rnd = Math.floor((Math.random() * multiplier) + lower);
+				return rnd;
+			}
+			function validPlacement(space, card) { //determines if a card can go into a given space
+				return !(card.rank > 10 && card.rank != space.groupNum);
+			}
+			function getNumberCardRanks(board) { //returns an array of all the number cards' ranks from the board
+				var output = [];
+				for (var group of board) {
+					for (var el of group) {
+						if (el.space.card != undefined) {
+							if (el.space.card.rank <= 10) {
+								output.push(el.space.card.rank)
+							}
+						}
+					}
+				}
+				return output;
+			}
+			function tensComboRemain(numCardRanks) { //takes an array of numbers and returns a boolean based on whether combos that sum to 10 exist
+				var output = false;
+				switch(true) {
+					case numCardRanks.indexOf(10) != -1:
+						output = true;
+						break;
+					case numCardRanks.indexOf(1) != -1  && numCardRanks.indexOf(9) != -1:
+						output = true;
+						break;
+					case numCardRanks.indexOf(2) != -1 && numCardRanks.indexOf(8) != -1:
+						output = true;
+						break;
+					case numCardRanks.indexOf(3) != -1 && numCardRanks.indexOf(7) != -1:
+						output = true;
+						break;
+					case numCardRanks.indexOf(4) != -1 && numCardRanks.indexOf(6) != -1:
+						output = true;
+						break;
+					case numCardRanks.indexOf(5) != numCardRanks.lastIndexOf(5):
+						output = true;
+						break;
+				}
+				return output;
+			}
+			function tripleTensComboRemain(numCardRanks) { //detects if there exists 3 numbers in the array that sums to 10
+				for (var a=0; a<numCardRanks.length-1; a++) {
+					for (var b=a+1; b<numCardRanks.length-1; b++) {
+						for (var c=b+1; c<numCardRanks.length-1; c++) {
+							if (numCardRanks[a]+numCardRanks[b]+numCardRanks[c] == 10) {
+								return true;
+							}
+						}
+					}
+				}
+				return false;
+			}
+			function lost() { //determine if player has lose (outside removal phase) - can drawn picture card be placed
+				if (broadcaster.rank > 10) {
+					return groups[broadcaster.rank-11].allOccupied(); //for royals, which placement is restricted, check if its possible group is full	
+				}
+				return false;
+			}
+			function win() { //determine if the whole board is occupied by royals (player won)
+				for (var group of groups) {
+					if (!group.allRoyals()) {
+						return false;
+					}
+				}
+				return true;
+			}
+			function proceedToRemovalPhase() { //check if all spaces are occupied
+				for (var group of groups) {
+					if (!group.allOccupied()) {
+						return false;
+					}
+				}
+				return true;
+			}
+
+			//controls
+			function awardPowerup() { //awards powerup based on which royalty was completed first
+				for (var group of groups) {
+					if (group.allRoyals()) {
+						localStorage.earnedPowerup = group[0].space.groupNum;
+						switch (localStorage.earnedPowerup) {
+							case "11":
+								var name = "Jump";
+								break;
+							case "12":
+								var name = "Triple Play";
+								break;
+							case "13":
+								var name = "Card Peek";
+								break;
+						}
+						msgOut.innerHTML = "You earned a powerup for your next round: " + name;
+					}
+				}
+			}
+			function powerupBtnVisibility() { //when to show the powerup button, since they're applicable in different phases
+				switch(true) {
+					case currentPowerup == 13 && !removalPhase:
+						powerupBtn.innerHTML = "Use Card Peek";
+						powerupBtn.style.display = "inline-block";
+						break;
+					case currentPowerup == 11 && !removalPhase:
+						powerupBtn.innerHTML = "Use Jump";
+						powerupBtn.style.display = "inline-block";
+						break;
+					case currentPowerup == 12 && removalPhase:
+						powerupBtn.innerHTML = "Use Triple Play";
+						powerupBtn.style.display = "inline-block";
+						break;
+					default:
+						powerupBtn.style.display = "";
+						break;
+				}
+			}
+			function powerup() { //using the powerup
+				switch(currentPowerup) {
+					case "11": //jump
+						if (broadcaster != undefined) { //if broadcaster is occupied
+							msgOut.innerHTML = "Place down the card first.  ";
+						} else if (cardDeck.deck.length == 52) { //if no cards to move
+							msgOut.innerHTML = "There aren't any cards on the board yet.  ";
+						} else { //go
+							jump = true;
+							currentPowerup = 0;
+							msgOut.innerHTML = "Select the card you want to move.  ";
+							powerupBtn.style.display = "";
+						}
+						break;
+					case "12": //triple play
+						if (tripleTensComboRemain(getNumberCardRanks(groups))) { //check if there exists a combo on the board that would allow triple play to be used
+							triplePlay = true;
+							powerupBtn.style.display = "";
+							currentPowerup = 0;
+							msgOut.innerHTML = "You can now select 3 cards to remove."
+						} else { //no combo
+							msgOut.innerHTML = "A triple play cannot be used right now."
+						}
+						break;
+					case "13": //peek
+						if (broadcaster == undefined) { //if next card is drawable already
+							msgOut.innerHTML = "Draw a card first.  ";
+						} else { //go
+							peekCard.src = cardDeck.deck[0].imageSrc;
+							peekCard.style.display = "inline";
+							powerupBtn.style.display = "";
+							currentPowerup = 0;
+						}
+						break;
+				}
+			}
+			function updateScore(space) {
+				if (space != undefined) { //earning points from card placement
+					if (space.card.rank > 10) { //add 1 point for every picture card
+						currentScore++;
+						if (groups[space.groupNum-11].allRoyals()) { //add 4 points for completing a royalty
+							currentScore += 4;
+						}
+					}
+				}
+				currentScoreDisp.innerHTML = currentScore;
+			}
+			function updateHighScore() {
+				if (currentScore > localStorage.highScore) { //replace high score if current score is higher
+					localStorage.highScore = currentScore;
+				}
+				highScoreDisp.innerHTML = localStorage.highScore;
+			}
+			function msgClear() { //clear error messages from message board
+				if (removalPhase) { //indication
+					msgOut.innerHTML = "REMOVAL PHASE";
+				} else {
+					msgOut.innerHTML = "";
+				}
+			}
+			function toggleInstructions() { //open or close instructions
+				if (instructionState.style.display == "") { //open
+					instructionState.style.display = "inline-block";
+					document.body.style.backgroundColor = "#745619"; //dim background
+				} else { //close
+					instructionState.style.display = "";
+					document.body.style.backgroundColor = "#ffbd38";
+				}
+			}
+			function reset() { //reset round
+				if(confirm("Are you sure you want to reset this round?  This cannot be undone.")) {
+					for (var group of groups) { //resetting board
+						for (var el of group) {
+							el.src = TARGET; //reset space appearance
+							el.space.card = undefined; //detach cards
+							el.style.border = "";
 						}
 					}
 
-					//elements
-					cardDeck = document.getElementById("center");
-					instructionState = document.getElementById("instructionPopup");
-					msgOut = document.getElementById("messageBoard");
-					currentScoreDisp = document.getElementById("currentScore");
-					highScoreDisp = document.getElementById("highScore");
-					powerupBtn = document.getElementById("powerupActivate");
-					peekCard = document.getElementById("peek");
-					
-					//deck
-					var deck = new CardDeck() //an empty deck
-					deck.populate(); //fill the deck
-					deck.shuffle(); //shuffle the deck
-					cardDeck.deck = deck; //attach to element
-					cardDeck.deck.el = cardDeck; //path back to the element
+					cardDeck.deck.splice(0, cardDeck.deck.length); //generate a new deck
+					cardDeck.deck.populate();
+					cardDeck.deck.shuffle();
+					cardDeck.src = BACK;
+
+					msgOut.innerHTML = "";
 
 					setStates();
 					powerupBtnVisibility();
 				}
-				function setStates() {
-					//flags
-					removalPhase = false;
-					broadcaster = undefined;
-					broadcaster2 = undefined; //for triple play
-					roundOver = false;
-					jump = false;
-					triplePlay = false;
+			}
+		</script>
+	</head>
+	<body onload="initialize();">
+		<!-- top region -->
+		<h1>Kings in the Corner</h1>
+		<div id="messageBoard"></div>
+		<br />
 
-					//powerups
-					if (localStorage.earnedPowerup == undefined) { //initialize variable
-						localStorage.earnedPowerup = 0; 
-					} //11: jump, 12: triple play, 13: card peek
-					currentPowerup = localStorage.earnedPowerup; //activate what was earned last round
-					localStorage.earnedPowerup = 0;
-
-					//scores
-					currentScore = 0;
-					if (localStorage.highScore == undefined) { //initialize variable
-						localStorage.highScore = 0;
-					}
-					updateScore();
-					updateHighScore();
-				}
-
-				//adding methods to HTMLCollections
-				HTMLCollection.prototype.allOccupied = function() { //determine if all the CardSpaces in the group is occupied
-					for (var el of this) {
-						if (el.space.card == undefined) {
-							return false;
-						}
-					}
-					return true;
-				}
-				HTMLCollection.prototype.allRoyals = function() { //determines if there are 4 royals in that group
-					if (this.allOccupied()) { //all spaces should be occupied first
-						for (var el of this) {
-							if (el.space.card.rank != el.space.groupNum) {
-								return false;
-							}
-						}
-						return true;
-					}
-					return false;
-				}
-				
-				//CardSpace
-				function CardSpace(loc) { //the individual card spaces 
-					this.groupNum = loc; //11 is side, 12 is top/bottom, 13 is corner
-				}
-				CardSpace.prototype.select = function() { //onclick action of card spaces
-					if (!roundOver) {
-						msgClear();
-						if (!removalPhase && !jump) { //if it's not the removal phase, nor is jump being used
-							if (broadcaster instanceof CardSpace) { //since jump's first click stores the CardSpace object and this algorith works with Card objects
-								var tempE = broadcaster.el;
-								var tempC = broadcaster.card;
-								broadcaster = tempC;
-								broadcaster.old = tempE;
-							}
-							switch (true) {
-								case broadcaster == undefined: //if a card hasn't been drawn
-									msgOut.innerHTML = "Draw a card first";
-									break;
-								case this.card != undefined: //if there's already a card there
-									if (this.el.style.border != "") { //unselectng a space when using jump
-										broadcaster = undefined;
-										jump = true;
-										this.el.style.border = "";
-									} else {
-										msgOut.innerHTML = "This space is already occupied.";
-									}
-									break;
-								case validPlacement(this, broadcaster): //if the placement is valid, move card there
-									peekCard.style.display = "";
-									this.card = broadcaster;
-									this.el.src = broadcaster.imageSrc;
-									cardDeck.src = BACK;
-									if (localStorage.earnedPowerup == 0) { //determine if the player is elegible for a powerup (meaning hasn't earned one yet)
-										awardPowerup();
-									}
-									if (broadcaster.old == undefined) { //can't score again by cardjumping
-										updateScore(this);
-									} else { //clean out original card when jumping
-										broadcaster.old.style.border = "";
-										broadcaster.old.src = TARGET;
-										broadcaster.old.space.card = undefined;
-									}
-									if (proceedToRemovalPhase()) { //check if all spaces are occupied
-										if (tensComboRemain(getNumberCardRanks(groups))) { //determine of the player can play a removal phase
-											removalPhase = true;
-											msgOut.innerHTML = "REMOVAL PHASE";
-											powerupBtnVisibility();
-										} else {
-											if (win()) { //determine and handle if the player won or lost as a result of inability to enter removal phase
-												msgOut.innerHTML = "Good job! You won the game! Click reset to play again. ";
-												currentScore += 12 + cardDeck.deck.length;
-												updateScore();
-											} else {
-												msgOut.innerHTML = "You lost.  Click reset to play again.";
-											}
-											roundOver = true;
-											updateHighScore();
-										}
-									}
-									broadcaster = undefined;
-									break;
-								default: //if placement is invalid
-									msgOut.innerHTML = "This card cannot go here.";
-									break;
-							}
-						} else { //removal phase or selecting a card to jump
-							switch (true) {
-								case this.card == undefined: //if the space is empty
-									msgOut.innerHTML = "This space is empty.";
-									break;
-								case this.card.rank > 10 && !jump: //remove only number cards in removal phase
-									msgOut.innerHTML = "Picture cards remain."
-									break;
-								case this == broadcaster || this == broadcaster2: //unselect
-									this.el.style.border = ""; 
-									if (this == broadcaster) {
-										broadcaster = undefined;
-									} else {
-										broadcaster2 = undefined;
-									}
-									break;
-								case this.card.rank == 10 && broadcaster == undefined && !jump && !triplePlay: //clicking a 10 card during removal phase
-									this.el.src = TARGET;
-									this.card = undefined;
-									break;
-								case this.card.rank <= 10 && (broadcaster == undefined || (broadcaster2 == undefined && triplePlay)) || jump:  //selection of not the last card
-									if (broadcaster2 == undefined && triplePlay) { //store space
-										broadcaster2 = this;
-									} else {
-										broadcaster = this; 
-									}
-									this.el.style.border = "solid 3px #69F0AE"; //highlight
-									if (jump) {
-										msgOut.innerHTML = "Pick a space to move that card to";
-									}
-									jump = false;
-									break;
-								case (broadcaster != undefined && !triplePlay) || (broadcaster2 != undefined && triplePlay): //last card
-									if ((this.card.rank + broadcaster.card.rank == 10 && !triplePlay) || (this.card.rank + broadcaster.card.rank + broadcaster2.card.rank == 10 && triplePlay)) { //detect if removable
-										this.el.src = TARGET; //removing
-										broadcaster.el.src = TARGET;
-										this.card = undefined;
-										broadcaster.card = undefined;
-										if (triplePlay) {
-											broadcaster2.el.src = TARGET;
-											broadcaster2.card = undefined;
-											triplePlay = false;
-										}
-									} else {
-										msgOut.innerHTML = "These cards do not sum to 10.";
-									}
-									broadcaster.el.style.border = ""; //unhighlight
-									if (broadcaster2 != undefined) {
-										broadcaster2.el.style.border = "";
-									}
-									broadcaster = undefined;
-									broadcaster2 = undefined;
-									break;
-							}
-							if (!tensComboRemain(getNumberCardRanks(groups))) { //determine if player can exit removal phase
-								removalPhase = false;
-								msgOut.innerHTML = "";
-								powerupBtnVisibility();
-							}
-						}
-					}
-				}
-
-				//Card
-				function Card(s, r) { //the individual cards
-					this.rank = r;
-					this.imageSrc = "cardimages/"+r+"-"+s+".png";
-				}
-
-				//CardDeck
-				function CardDeck() {} //a deck of cards
-				CardDeck.prototype = Array.prototype; //like an array
-				CardDeck.prototype.populate = function() { //fills the deck with a standard deck
-					for (var r=1; r!=14; r++) { //ranks
-						for (var s=0; s!=4; s++) { //suits
-							this.push(new Card(s, r));
-						}
-					}
-				}
-				CardDeck.prototype.shuffle = function() { //shuffling the deck of cards
-					var temp = [];
-					while (this.length != 0) {
-						temp.push((this.splice(randomInteger(0, this.length-1), 1))[0]); //pull cards from random order into a temporary deck
-					}
-					this.push.apply(this, temp); //replace the actual deck with the new shuffled one
-				}
-				CardDeck.prototype.draw = function() { //drawing a card
-					if (!roundOver) {
-						msgClear();
-						if (!removalPhase && !jump) { //can only draw a card when it's not removal phase
-							if (broadcaster == undefined) { //can only draw a card if the previously drawn card has been placed down
-								broadcaster = this.shift(); //broadcast what card has been drawn
-								this.el.src = broadcaster.imageSrc; //display the card that has been drawn
-								if (lost()) { //check if card is placable
-									msgOut.innerHTML = "You lost.  Click reset to play again.  "
-									roundOver = true;
-									updateHighScore();
-								}
-							} else {
-								msgOut.innerHTML = "Place down the card before drawing the next one."
-							}
-						} else {
-							msgOut.innerHTML = "You can't draw a card right now."
-						}
-					}
-				}
-
-
-				//tools
-				function randomInteger(lower, upper) {  //random number generator
-					var multiplier = upper - lower + 1;
-					var rnd = Math.floor((Math.random() * multiplier) + lower);
-					return rnd;
-				}
-				function validPlacement(space, card) { //determines if a card can go into a given space
-					return !(card.rank > 10 && card.rank != space.groupNum);
-				}
-				function getNumberCardRanks(spaces) { //returns an array of all the number cards' ranks from the board
-					var output = [];
-					for (var group of spaces) {
-						for (var el of group) {
-							if (el.space.card != undefined) {
-								if (el.space.card.rank <= 10) {
-									output.push(el.space.card.rank)
-								}
-							}
-						}
-					}
-					return output;
-				}
-				function tensComboRemain(numCardRanks) { //takes an array of numbers and returns a boolean based on whether combos that sum to 10 exist
-					var output = false;
-					switch(true) {
-						case numCardRanks.indexOf(10) != -1:
-							output = true;
-							break;
-						case numCardRanks.indexOf(1) != -1  && numCardRanks.indexOf(9) != -1:
-							output = true;
-							break;
-						case numCardRanks.indexOf(2) != -1 && numCardRanks.indexOf(8) != -1:
-							output = true;
-							break;
-						case numCardRanks.indexOf(3) != -1 && numCardRanks.indexOf(7) != -1:
-							output = true;
-							break;
-						case numCardRanks.indexOf(4) != -1 && numCardRanks.indexOf(6) != -1:
-							output = true;
-							break;
-						case numCardRanks.indexOf(5) != numCardRanks.lastIndexOf(5):
-							output = true;
-							break;
-					}
-					return output;
-				}
-				function tripleTensComboRemain(numCardRanks) {
-					for (var a=0; a<numCardRanks.length-1; a++) {
-						for (var b=a+1; b<numCardRanks.length-1; b++) {
-							for (var c=b+1; c<numCardRanks.length-1; c++) {
-								if (numCardRanks[a]+numCardRanks[b]+numCardRanks[c] == 10) {
-									return true;
-								}
-							}
-						}
-					}
-					return false;
-				}
-				function lost() { //determine if player has lose (outside removal phase)
-					if (broadcaster.rank > 10) {
-						return groups[broadcaster.rank-11].allOccupied(); //for royals, which placement is restricted, check if its possible group is full	
-					}
-					return false;
-				}
-				function win() { //determine if the whole board is occupied by royals (player won)
-					for (var group of groups) {
-						if (!group.allRoyals()) {
-							return false;
-						}
-					}
-					return true;
-				}
-				function proceedToRemovalPhase() { //check if all spaces are occupied
-					for (var group of groups) {
-						if (!group.allOccupied()) {
-							return false;
-						}
-					}
-					return true;
-				}
-
-				//controls
-				function awardPowerup() { //awards powerup based on 
-					for (var group of groups) {
-						if (group.allRoyals()) {
-							localStorage.earnedPowerup = group[0].space.groupNum;
-							switch (localStorage.earnedPowerup) {
-								case "11":
-									var name = "Jump";
-									break;
-								case "12":
-									var name = "Triple Play";
-									break;
-								case "13":
-									var name = "Card Peek";
-									break;
-							}
-							msgOut.innerHTML = "You earned a powerup for your next round: " + name;
-						}
-					}
-				}
-				function powerupBtnVisibility() { //when to show the powerup button
-					switch(true) {
-						case currentPowerup == 13 && !removalPhase:
-							powerupBtn.innerHTML = "Use Card Peek";
-							powerupBtn.style.display = "inline-block";
-							break;
-						case currentPowerup == 11 && !removalPhase:
-							powerupBtn.innerHTML = "Use Jump";
-							powerupBtn.style.display = "inline-block";
-							break;
-						case currentPowerup == 12 && removalPhase:
-							powerupBtn.innerHTML = "Use Triple Play";
-							powerupBtn.style.display = "inline-block";
-							break;
-						default:
-							powerupBtn.style.display = "";
-							break;
-					}
-				}
-				function powerup() { //using the powerup
-					switch(currentPowerup) {
-						case "11": //jump
-							if (broadcaster != undefined) { //if broadcaster is occupied
-								msgOut.innerHTML = "Place down the card first.  ";
-							} else if (cardDeck.deck.length == 52) { //if no cards to move
-								msgOut.innerHTML = "There aren't any cards on the board yet.  ";
-							} else {
-								jump = true;
-								currentPowerup = 0;
-								msgOut.innerHTML = "Select the card you want to move.  ";
-								powerupBtn.style.display = "";
-							}
-							break;
-						case "12": //triple play
-							if (tripleTensComboRemain(getNumberCardRanks(groups))) {
-								triplePlay = true;
-								powerupBtn.style.display = "";
-								currentPowerup = 0;
-								msgOut.innerHTML = "You can now select 3 cards to remove."
-							} else {
-								msgOut.innerHTML = "A triple play cannot be used right now."
-							}
-							break;
-						case "13": //peek
-							if (broadcaster == undefined) { //if next card is drawable already
-								msgOut.innerHTML = "Draw a card first.  ";
-							} else {
-								peekCard.src = cardDeck.deck[0].imageSrc;
-								peekCard.style.display = "inline";
-								powerupBtn.style.display = "";
-								currentPowerup = 0;
-							}
-							break;
-					}
-				}
-				function updateScore(space) {
-					if (space != undefined) { //earning points from card placement
-						if (space.card.rank > 10) { //add 1 point for every picture card
-							currentScore++;
-							if (groups[space.groupNum-11].allRoyals()) { //add 4 points for completing a royalty
-								currentScore += 4;
-							}
-						}
-					}
-					currentScoreDisp.innerHTML = currentScore;
-				}
-				function updateHighScore() {
-					if (currentScore > localStorage.highScore) { //replace high score if current score is higher
-						localStorage.highScore = currentScore;
-					}
-					highScoreDisp.innerHTML = localStorage.highScore;
-				}
-				function msgClear() { //clear error messages from message board
-					if (removalPhase) {
-						msgOut.innerHTML = "REMOVAL PHASE";
-					} else {
-						msgOut.innerHTML = "";
-					}
-				}
-				function toggleInstructions() { //open or close instructions
-					if (instructionState.style.display == "") { //open
-						instructionState.style.display = "inline-block";
-						document.body.style.backgroundColor = "#745619"; //dim background
-					} else { //close
-						instructionState.style.display = "";
-						document.body.style.backgroundColor = "#ffbd38";
-					}
-				}
-				function reset() { //reset round
-					if(confirm("Are you sure you want to reset this round?  This cannot be undone.")) {
-						for (var group of groups) { //resetting board
-							for (var el of group) {
-								el.src = TARGET; //reset space appearance
-								el.space.card = undefined; //detach cards
-								el.style.border = "";
-							}
-						}
-
-						cardDeck.deck.splice(0, cardDeck.deck.length); //generate a new deck
-						cardDeck.deck.populate();
-						cardDeck.deck.shuffle();
-						cardDeck.src = BACK;
-
-						msgOut.innerHTML = "";
-
-						setStates();
-						powerupBtnVisibility();
-					}
-				}
-			</script>
-		</head>
-        <body onload="initialize();">
-			<!-- top region -->
-			<h1>Kings in the Corner</h1>
-			<div id="messageBoard"></div>
+		<!-- board -->
+		<span>
+			<img class="corner" />
+			<img class="top" />
+			<img class="top" />
+			<img class="corner" />
 			<br />
 
-			<!-- board -->
-			<span>
-				<img class="corner" />
-				<img class="top" />
-				<img class="top" />
-				<img class="corner" />
+			<img class="side" />
+			<span class="blank"></span>
+			<span class="blank"></span>
+			<img class="side" />
+			<br />
+
+			<img class="side" />
+			<span class="blank"></span>
+			<span class="blank"></span>
+			<img class="side" />
+			<br />
+
+			<img class="corner" />
+			<img class="top" />
+			<img class="top" />
+			<img class="corner" />
+			<br />
+
+			<img id="center" src="cardimages/back-red-75-3.png" onclick="this.deck.draw();" />
+		</span>
+
+		<!-- powerups -->
+		<button id="powerupActivate" onclick="powerup();"></button>
+		<img id="peek" />
+
+		<!-- instructions -->
+		<div id="instructionPopup">
+			<h6>Instructions</h6>
+			<p>
+				Start by clicking the deck in the center to draw a card.  Then, look at the card.  If it is a
+				<ul>
+					<li>Jack, it must be placed on a non-corner space on the left or right sides.</li>
+					<li>Queen, it must be placed on a non-corner space on the top or bottom sides.</li>
+					<li>King, it must be placed on a corner.</li>
+					<li>number card, it can be placed anywhere.</li>
+				</ul>
 				<br />
-
-				<img class="side" />
-				<span class="blank"></span>
-				<span class="blank"></span>
-				<img class="side" />
+				To place a card down, click on an appropriate empty card space.  If there are no appropriate card spaces free for you to put the card down on, you lost the game. 
 				<br />
-
-				<img class="side" />
-				<span class="blank"></span>
-				<span class="blank"></span>
-				<img class="side" />
+				Once you sucessfully filled all the spaces with appropriate cards, the game enters the removal phase.  
 				<br />
-
-				<img class="corner" />
-				<img class="top" />
-				<img class="top" />
-				<img class="corner" />
+				In this phase, click on any 2 number cards that sum to 10 to take them off the board.  A 10 card by itself can be clicked on to be removed.   An Ace is worth 1.  
 				<br />
+				If nothing can be removed when you enter removal phase, you lost the game.  Once all possible combos are removed, you exit removal phase and keep playing.  
+				<br />
+				This cycle repeats.  You win when you fill all the spaces with a picture card.  
+				<br /><br />
+				You can earn points by
+				<br />
+				<ul>
+					<li>placing a picture card down for 1 point.</li>
+					<li>placing down 4 cards of the same royalty for 4 points.</li>
+					<li>winning the game for 12 points + 1 point for each card left in the deck.</li>
+				</ul>
+				<br />
+				You can earn a powerup once per round for your next round by
+				<ul>
+					<li>placing 4 kings for a card peek, which allows you one opportunity to peek at the next card in the deck.</li>
+					<li>placing 4 queens for a triple play, which allows you one opportunity to remove 3 cards summing to 10 at once during removal phase.</li>
+					<li>placing 4 jacks for a jump, which allows you to move a card that's already placed on the board (but must still be placed in an appropriate location).</li>
+				</ul>
+			</p>
+			<button onclick="toggleInstructions()" id="instructionClose">Close</button>
+		</div>
 
-				<img id="center" src="cardimages/back-red-75-3.png" onclick="this.deck.draw();" />
-			</span>
-
-			<!-- powerups -->
-			<button id="powerupActivate" onclick="powerup();"></button>
-			<img id="peek" />
-
-			<!-- instructions -->
-			<div id="instructionPopup">
-				<h6>Instructions</h6>
-				<p>
-					Start by clicking the deck in the center to draw a card.  Then, look at the card.  If it is a
-					<ul>
-						<li>Jack, it must be placed on a non-corner space on the left or right sides.</li>
-						<li>Queen, it must be placed on a non-corner space on the top or bottom sides.</li>
-						<li>King, it must be placed on a corner.</li>
-						<li>number card, it can be placed anywhere.</li>
-					</ul>
-					<br />
-					To place a card down, click on an appropriate empty card space.  If there are no appropriate card spaces free for you to put the card down on, you lost the game. 
-					<br />
-					Once you sucessfully filled all the spaces with appropriate cards, the game enters the removal phase.  
-					<br />
-					In this phase, click on any 2 number cards that sum to 10 to take them off the board.  A 10 card by itself can be clicked on to be removed.   An Ace is worth 1.  
-					<br />
-					If nothing can be removed when you enter removal phase, you lost the game.  Once all possible combos are removed, you exit removal phase and keep playing.  
-					<br />
-					This cycle repeats.  You win when you fill all the spaces with a picture card.  
-					<br /><br />
-					You can earn points by
-					<br />
-					<ul>
-						<li>placing a picture card down for 1 point.</li>
-						<li>placing down 4 cards of the same royalty for 4 points.</li>
-						<li>winning the game for 12 points + 1 point for each card left in the deck.</li>
-					</ul>
-					<br />
-					You can earn a powerup once per round for your next round by
-					<ul>
-						<li>placing 4 kings for a card peek, which allows you one opportunity to peek at the next card in the deck.</li>
-						<li>placing 4 queens for a triple play, which allows you one opportunity to remove 3 cards summing to 10 at once during removal phase.</li>
-						<li>placing 4 jacks for a jump, which allows you to move a card that's already placed on the board (but must still be placed in an appropriate location).</li>
-					</ul>
-				</p>
-				<button onclick="toggleInstructions()" id="instructionClose">Close</button>
-			</div>
-
-			<!-- scoreboard, button region -->
-			<div id="scoreboard">
-				<button id="instructionOpen" onclick="toggleInstructions();">Instructions</button>
-				Current score: <span id="currentScore"></span> High score: <span id="highScore"></span>
-				<button id="reset" onclick="reset();">Reset</button>
-			<div>
-		</body>
-	</html>
+		<!-- scoreboard, button region -->
+		<div id="scoreboard">
+			<button id="instructionOpen" onclick="toggleInstructions();">Instructions</button>
+			Current score: <span id="currentScore"></span> High score: <span id="highScore"></span>
+			<button id="reset" onclick="reset();">Reset</button>
+		<div>
+	</body>
+</html>
+<!--  \    /\
+       )  ( ')   (QUACK)
+      (  /  )
+	   \(__)|
+-->
