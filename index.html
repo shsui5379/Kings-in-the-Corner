@@ -309,7 +309,7 @@
 								broadcaster2 = undefined;
 								break;
 						}
-						if (!tensComboRemain(getNumberCardRanks(groups))) { //determine if player can exit removal phase - any combos left to remove
+						if (!tensComboRemain(getNumberCardRanks(groups)) && removalPhase) { //determine if player can exit removal phase - any combos left to remove
 							removalPhase = false;
 							msgOut.innerHTML = "";
 							powerupBtnVisibility();
