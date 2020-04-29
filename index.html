@@ -49,14 +49,10 @@
 			}
 
 			/*cards*/
-			.blank {
-				width: 75px;
-				height: 108px;
-				display: inline-block;
-			}
-			#center {
+			#deck {
 				position: relative;
 				top: -296px;
+				right: -25%;
 				box-shadow: 2px 2px 0px 1px white;
 			}
 
@@ -107,7 +103,7 @@
 			//initializations and objects
 			function initialize() {
 				//attaching objects
-				groups = [document.getElementsByClassName("side"), document.getElementsByClassName("top"), document.getElementsByClassName("corner")];
+				groups = [document.getElementsByClassName("side"), document.getElementsByClassName("top"), document.getElementsByClassName("corner"), document.getElementsByClassName("center")];
 				for (var i = 0; i < groups.length; i++) { 
 					for (var el of groups[i]) {
 						el.src = TARGET;
@@ -118,7 +114,7 @@
 				}
 
 				//elements
-				cardDeck = document.getElementById("center");
+				cardDeck = document.getElementById("deck");
 				instructionState = document.getElementById("instructionPopup");
 				msgOut = document.getElementById("messageBoard");
 				currentScoreDisp = document.getElementById("currentScore");
@@ -229,19 +225,20 @@
 										removalPhase = true;
 										msgOut.innerHTML = "REMOVAL PHASE";
 										powerupBtnVisibility();
-									} else { //can't enter - end round
-										if (win()) { //determine and handle if the player won or lost as a result of inability to enter removal phase - all royals
-											msgOut.innerHTML = "Good job! You won the game! Click reset to play again. ";
-											currentScore += 12 + cardDeck.deck.length;
-											updateScore();
-										} else { //lost
-											msgOut.innerHTML = "You lost.  Click reset to play again.";
-										}
+									} else { //can't play removal phase - lost
+										msgOut.innerHTML = "You lost.  Click reset to play again.";
 										roundOver = true;
 										updateHighScore();
 									}
 								}
 								broadcaster = undefined;
+								if (win()) { //determine and handle if the player won - all royals
+									msgOut.innerHTML = "Good job! You won the game! Click reset to play again. ";
+									currentScore += 12 + cardDeck.deck.length;
+									roundOver = true;
+									updateScore();
+									updateHighScore();
+								}
 								break;
 							default: //if placement is invalid
 								msgOut.innerHTML = "This card cannot go here.";
@@ -428,9 +425,17 @@
 				return false;
 			}
 			function win() { //determine if the whole board is occupied by royals (player won)
-				for (var group of groups) {
-					if (!group.allRoyals()) {
-						return false;
+				for (var i=0; i!=groups.length; i++) {
+					if (i!=groups.length-1) { //to win, sides, top, corners must all be royals
+						if (!groups[i].allRoyals()) {
+							return false;
+						}
+					} else {
+						for (var e=0; e!=groups[i].length; e++) {
+							if (groups[i][e].space.card != undefined) { //and center must be emptied
+								return false;
+							}
+						}
 					}
 				}
 				return true;
@@ -590,14 +595,14 @@
 			<br />
 
 			<img class="side" />
-			<span class="blank"></span>
-			<span class="blank"></span>
+			<img class="center" />
+			<img class="center" />
 			<img class="side" />
 			<br />
 
 			<img class="side" />
-			<span class="blank"></span>
-			<span class="blank"></span>
+			<img class="center" />
+			<img class="center" />
 			<img class="side" />
 			<br />
 
@@ -606,9 +611,8 @@
 			<img class="top" />
 			<img class="corner" />
 			<br />
-
-			<img id="center" src="cardimages/back-red-75-3.png" onclick="this.deck.draw();" />
 		</span>
+		<img id="deck" src="cardimages/back-red-75-3.png" onclick="this.deck.draw();" />
 
 		<!-- powerups -->
 		<button id="powerupActivate" onclick="powerup();"></button>
@@ -634,7 +638,7 @@
 				<br />
 				If nothing can be removed when you enter removal phase, you lost the game.  Once all possible combos are removed, you exit removal phase and keep playing.  
 				<br />
-				This cycle repeats.  You win when you fill all the spaces with a picture card.  
+				This cycle repeats.  You win when only 12 picture cards are on the board.  
 				<br /><br />
 				You can earn points by
 				<br />
@@ -665,5 +669,5 @@
 <!--  \    /\
        )  ( ')   (QUACK)
       (  /  )
-	   \(__)|
+       \(__)|
 -->
