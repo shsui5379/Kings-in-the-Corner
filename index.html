@@ -230,15 +230,14 @@
 										roundOver = true;
 										updateHighScore();
 									}
-								}
-								broadcaster = undefined;
-								if (win()) { //determine and handle if the player won - all royals
+								} else if (win()) { //determine and handle if the player won - all royals
 									msgOut.innerHTML = "Good job! You won the game! Click reset to play again. ";
 									currentScore += 12 + cardDeck.deck.length;
 									roundOver = true;
 									updateScore();
 									updateHighScore();
 								}
+								broadcaster = undefined;
 								break;
 							default: //if placement is invalid
 								msgOut.innerHTML = "This card cannot go here.";
