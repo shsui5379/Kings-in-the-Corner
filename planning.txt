@@ -55,7 +55,7 @@ CardSpace: has a method for reading the broadcaster to determine if the drawn ca
 HTMLCollections have added methods for determining if all the spaces are occupied, and if they're all royals
 
 Interface:
-Image of a deck in the center (cardback) [done]
+Image of a deck on the right (cardback) [done]
     removes top card the CardDeck onclick [done]
 4x4 board, showing outlines of locations where a card could go [done]
     Each location is its own image element, so its src can be updated with card faces [done]
